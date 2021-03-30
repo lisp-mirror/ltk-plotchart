@@ -311,17 +311,17 @@
     (when colour
       (setf result (format nil "~a -colour ~a" result colour)))
     (when type
-      (setf result (format nil "~a -type ~a" result type)))
+      (setf result (format nil "~a -type ~a" result (string-downcase (string type)))))
     (when symbol
-      (setf result (format nil "~a -symbol ~a" result symbol)))
+      (setf result (format nil "~a -symbol ~a" result (string-downcase (string symbol)))))
     (when width
       (setf result (format nil "~a -width ~d" result width)))
     (when filled
-      (setf result (format nil "~a -filled ~a" result filled)))
+      (setf result (format nil "~a -filled ~a" result (string-downcase (string filled)))))
     (when fillcolour
       (setf result (format nil "~a -fillcolour ~a" result fillcolour)))
     (when style
-      (setf result (format nil "~a -style ~a" result style)))
+      (setf result (format nil "~a -style ~a" result (string-downcase (string style)))))
     (when smooth
       (setf result (format nil "~a -smooth ~a" result smooth)))
     result))
