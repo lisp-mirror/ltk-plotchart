@@ -2,7 +2,10 @@
   (:use :cl :ltk)
   (:export
     :bar-chart
+    :bar-chart-config
+    :bar-chart-plot
     :box-plot
+    :box-plot-plot
     :chart-background
     :chart-balloon
     :chart-balloonconfig
@@ -23,11 +26,23 @@
     :chart-ytext
     :chart-yticklines
     :gantt-chart
+    :gantt-chart-color
+    :gantt-chart-colour
+    :gantt-chart-connect
+    :gantt-chart-font
+    :gantt-chart-hscroll
+    :gantt-chart-milestone
+    :gantt-chart-summary
+    :gantt-chart-task
+    :gantt-chart-vertline
+    :gantt-chart-vscroll
     :histogram
     :histogram-dataconfig
     :histogram-plot
     :histogram-plotcumulative
     :horizontal-bar-chart
+    :horizontal-bar-chart-config
+    :horizontal-bar-chart-plot
     :isometric-plot
     :isometric-plot-circle
     :isometric-plot-filled-circle
@@ -52,13 +67,24 @@
     :right-axis
     :spiral-pie
     :status-timeline
+    :status-timeline-plot
+    :status-timeline-vertline
     :strip-chart
     :strip-chart-dataconfig
     :strip-chart-plot
     :table-chart
+    :table-chart-cellconfigure
+    :table-chart-row
+    :table-chart-separator
     :ternary-diagram
     :ternary-diagram-dataconfig
+    :ternary-diagram-line
+    :ternary-diagram-plot
+    :ternary-diagram-text
+    :ternary-diagram-ticklines
     :threed-bar-chart
+    :threed-bar-chart-config
+    :threed-bar-chart-plot
     :threed-plot
     :threed-plot-color
     :threed-plot-colour
@@ -67,11 +93,19 @@
     :threed-plot-plotdata
     :threed-plot-ribbon
     :threed-ribbon-chart
+    :threed-ribbon-chart-area
+    :threed-ribbon-chart-line
     :threed-ribbon-plot
     :threed-ribbon-plot-color
     :threed-ribbon-plot-colour
     :threed-ribbon-plot-plot
     :time-chart
+    :time-chart-addperiod
+    :time-chart-hscroll
+    :time-chart-milestone
+    :time-chart-period
+    :time-chart-vertline
+    :time-chart-vscroll
     :tx-plot
     :tx-plot-dataconfig
     :tx-plot-plot

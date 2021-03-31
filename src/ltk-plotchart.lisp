@@ -1,4 +1,4 @@
-;; LTk wrapper around the tklib plotchart
+;; LTk wrapper around the tklib plotchart module
 ;;
 ;; -- order of definition and naming follows that in the plotchart documentation
 ;; https://core.tcl-lang.org/tklib/doc/trunk/embedded/www/tklib/files/modules/plotchart/plotchart.html
@@ -13,6 +13,7 @@
 ;; - $anyplot deletedata
 ;; - normal-plot - requires math::statistics package
 ;; - 3dplots - plotfunc, plotfuncont - not sure how to handle function (callback?)
+;; - $table formatcommand procname - not sure how to handle procedures
 
 (in-package :ltk-plotchart)
 
@@ -330,7 +331,8 @@
 ;; ---------------------------------------------------------------------------
 ;; Strip Chart
 
-(defclass strip-chart (xy-plot))
+(defclass strip-chart (xy-plot)
+  ())
 
 ;; ---------------------------------------------------------------------------
 ;; TX Plot
@@ -426,7 +428,7 @@
   ((radius-data :accessor radius-data :initarg :radius-data :initform '(10 1))
    (sectors :accessor sectors :initarg :sectors :initform 16)))
 
-(defmethod initialize-instance :after ((chart windrose))
+(defmethod initialize-instance :after ((chart windrose) &key)
   (format-wish "set ~a [::Plotchart::createWindrose ~a {~{ ~d~} } ~a]" 
                (name chart) 
                (widget-path (canvas chart))
@@ -447,7 +449,7 @@
    (yaxis :accessor yaxis :initarg :yaxis :initform '(0 10))
    (stepsize :accessor stepsize :initarg :stepsize :initform :noaxes)))
 
-(defmethod initialize-instance :after ((chart isometric-plot))
+(defmethod initialize-instance :after ((chart isometric-plot) &key)
   (format-wish "set ~a [::Plotchart::createHistogram ~a {~{ ~d~} } {~{ ~d~} } ~a]" 
                (name chart) 
                (widget-path (canvas chart))
@@ -545,7 +547,7 @@
   (format-wish "$~a plotdata {~&~a~&}"
                (name chart)
                (apply #'uiop:strcat 
-                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&")) data))))
+                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&" row)) data))))
 
 (defgeneric threed-plot-interpolatedata (chart data contours))
 (defmethod threed-plot-interpolatedata ((chart threed-plot) data contours)
@@ -553,7 +555,7 @@
   (format-wish "$~a plotdata {~&~a~&} {~{ ~f~} }"
                (name chart)
                (apply #'uiop:strcat 
-                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&")) data))
+                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&" row)) data))
                contours))
 
 (defgeneric threed-plot-colour (chart fill border))
@@ -578,7 +580,7 @@
   (format-wish "$~a ribbon {~&~a~&}"
                (name chart)
                (apply #'uiop:strcat 
-                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&")) yzpairs))))
+                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&" row)) yzpairs))))
 
 ;; ---------------------------------------------------------------------------
 ;; 3D Ribbon Plot
@@ -587,7 +589,7 @@
   ((yaxis :accessor yaxis :initarg :yaxis :initform '(0 10 1))
    (zaxis :accessor zaxis :initarg :zaxis :initform '(0 10 1))))
 
-(defmethod initialize-instance :after ((chart threed-ribbon-plot))
+(defmethod initialize-instance :after ((chart threed-ribbon-plot) &key)
   (format-wish "set ~a [::Plotchart::create3DRibbonPlot ~a {~{ ~d~} } {~{ ~d~} }]" 
                (name chart) 
                (widget-path (canvas chart))
@@ -617,12 +619,13 @@
   (format-wish "$~a plot {~&~a~&}"
                (name chart)
                (apply #'uiop:strcat 
-                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&")) yzpairs))))
+                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&" row)) yzpairs))))
 
 ;; ---------------------------------------------------------------------------
 ;; Pie Chart
 
-(defclass pie-chart (plotchart))
+(defclass pie-chart (plotchart)
+  ())
 
 (defmethod initialize-instance :after ((chart pie-chart) &key)
   (format-wish "set ~a [::Plotchart::createPiechart ~a]" (name chart) (widget-path (canvas chart))))
@@ -671,14 +674,15 @@
 ;; ---------------------------------------------------------------------------
 ;; Spiral Pie 
 
-(defclass spiral-pie (pie-chart))
+(defclass spiral-pie (pie-chart) 
+  ())
 
 ;; ---------------------------------------------------------------------------
 ;; Radial Chart
 
 (defclass radial-chart (plotchart)
   ((names :accessor names :initarg :names :initform nil)
-   (scale :accessor scale :initarg :scale :initform 1.0)
+   (scale :accessor radial-chart-scale :initarg :scale :initform 1.0)
    (style :accessor style :initarg :style :initform "lines")))
 
 (defmethod initialize-instance :after ((chart radial-chart) &key)
@@ -720,7 +724,7 @@
    (noseries :accessor noseries :initarg :noseries :initform 1)))
 
 (defmethod initialize-instance :after ((chart bar-chart) &key xlabelangle)
-  (format-wish "set ~a [::Plotchart::createBarChart ~a {~{ ~a~} } {~{ ~d~} } ~a~a]" 
+  (format-wish "set ~a [::Plotchart::createBarchart ~a {~{ ~a~} } {~{ ~d~} } ~a~a]" 
                (name chart) 
                (widget-path (canvas chart))
                (xlabels chart)
@@ -728,6 +732,26 @@
                (string-downcase (string (noseries chart)))
                (if xlabelangle (format nil " -xlabelangle ~d" xlabelangle) "")
                ))
+
+(defgeneric bar-chart-plot (chart series ydata colour &optional direction brightness))
+(defmethod bar-chart-plot ((chart bar-chart) series ydata colour &optional direction brightness)
+  (format-wish "$~a plot ~a { ~{ ~a~} } ~a ~a" 
+               (name chart) 
+               series
+               ydata 
+               (if direction (string-downcase (string direction)) "")
+               (if brightness (string-downcase (string brightness)) "")))
+
+(defgeneric bar-chart-config (chart &key showvalues valuefont valuecolour valueformat))
+(defmethod bar-chart-config ((chart bar-chart) &key showvalues valuefont valuecolour valueformat)
+  (when showvalues
+    (format-wish "$~a config -showvalues ~a" (name chart) showvalues))
+  (when valuefont
+    (format-wish "$~a config -valuefont \"~a\"" (name chart) valuefont))
+  (when valuecolour
+    (format-wish "$~a config -valuecolour ~a" (name chart) (string-downcase (string valuecolour))))
+  (when valueformat
+    (format-wish "$~a config -valueformat \"~a\"" (name chart) valueformat)))
 
 ;; ---------------------------------------------------------------------------
 ;; Horizontal Bar Chart
@@ -737,8 +761,8 @@
    (ylabels :accessor ylabels :initarg :ylabels :initform nil)
    (noseries :accessor noseries :initarg :noseries :initform 1)))
 
-(defmethod initialize-instance :after ((chart bar-chart) &key)
-  (format-wish "set ~a [::Plotchart::createBarChart ~a {~{ ~d~} } {~{ ~a~} } ~a]" 
+(defmethod initialize-instance :after ((chart horizontal-bar-chart) &key)
+  (format-wish "set ~a [::Plotchart::createHorizontalBarchart ~a {~{ ~d~} } {~{ ~a~} } ~a]" 
                (name chart) 
                (widget-path (canvas chart))
                (xaxis chart)
@@ -746,53 +770,382 @@
                (string-downcase (string (noseries chart)))
                ))
 
+(defgeneric horizontal-bar-chart-plot (chart series xdata colour &optional direction brightness))
+(defmethod horizontal-bar-chart-plot ((chart horizontal-bar-chart) series xdata colour 
+                                                                   &optional direction brightness)
+  (format-wish "$~a plot ~a { ~{ ~a~} } ~a ~a" 
+               (name chart) 
+               series
+               xdata 
+               (if direction (string-downcase (string direction)) "")
+               (if brightness (string-downcase (string brightness)) "")))
+
+(defgeneric horizontal-bar-chart-config (chart &key showvalues valuefont
+                                               valuecolour valueformat))
+(defmethod horizontal-bar-chart-config ((chart horizontal-bar-chart) &key
+                                                                     showvalues
+                                                                     valuefont
+                                                                     valuecolour
+                                                                     valueformat)
+  (when showvalues
+    (format-wish "$~a config -showvalues ~a" (name chart) showvalues))
+  (when valuefont
+    (format-wish "$~a config -valuefont \"~a\"" (name chart) valuefont))
+  (when valuecolour
+    (format-wish "$~a config -valuecolour ~a" (name chart) (string-downcase (string valuecolour))))
+  (when valueformat
+    (format-wish "$~a config -valueformat \"~a\"" (name chart) valueformat)))
+
 ;; ---------------------------------------------------------------------------
 ;; 3D Bar Chart
 
 (defclass threed-bar-chart (plotchart)
-  ())
+  ((yaxis :accessor yaxis :initarg :yaxis :initform '(0 10 1))
+   (nobars :accessor nobars :initarg :nbars :initform 1)))
+
+(defmethod initialize-instance :after ((chart threed-bar-chart) &key)
+  (format-wish "set ~a [::Plotchart::create3DBarchart ~a {~{ ~d~} } ~d]" 
+               (name chart) 
+               (widget-path (canvas chart))
+               (yaxis chart)
+               (nobars chart)
+               ))
+
+(defgeneric threed-bar-chart-plot (chart label yvalue colour))
+(defmethod threed-bar-chart-plot ((chart threed-bar-chart) label yvalue colour)
+  (format-wish "$~a plot ~a ~f ~a" 
+               (name chart) 
+               label
+               yvalue
+               (string-downcase (string colour))))
+
+(defgeneric threed-bar-chart-config (chart 
+                                      &key usebackground useticklines
+                                      showvalues labelfont labelcolour
+                                      valuefont valuecolour))
+(defmethod threed-bar-chart-config ((chart threed-bar-chart) 
+                                    &key usebackground useticklines showvalues
+                                    labelfont labelcolour valuefont valuecolour)
+  (when usebackground
+    (format-wish "$~a config -usebackground ~a" (name chart) usebackground))
+  (when useticklines
+    (format-wish "$~a config -useticklines ~a" (name chart) useticklines))
+  (when showvalues
+    (format-wish "$~a config -showvalues ~a" (name chart) showvalues))
+  (when labelfont
+    (format-wish "$~a config -labelfont \"~a\"" (name chart) labelfont))
+  (when labelcolour
+    (format-wish "$~a config -labelcolour ~a" (name chart) (string-downcase (string labelcolour))))
+  (when valuefont
+    (format-wish "$~a config -valuefont \"~a\"" (name chart) valuefont))
+  (when valuecolour
+    (format-wish "$~a config -valuecolour ~a" (name chart) (string-downcase (string valuecolour)))))
 
 ;; ---------------------------------------------------------------------------
 ;; 3D Ribbon Chart
 
 (defclass threed-ribbon-chart (plotchart)
-  ())
+  ((names :accessor names :initarg :names :initform nil)
+   (yaxis :accessor yaxis :initarg :yaxis :initform '(0 10 1))
+   (zaxis :accessor zaxis :initarg :zaxis :initform '(0 10 1))
+   (nobars :accessor nobars :initarg :nbars :initform 1)))
+
+(defmethod initialize-instance :after ((chart threed-ribbon-chart) &key)
+  (format-wish "set ~a [::Plotchart::create3DRibbonChart ~a {~{ ~a~} } {~{ ~d~} } {~{ ~d~} } ~d]" 
+               (name chart) 
+               (widget-path (canvas chart))
+               (names chart)
+               (yaxis chart)
+               (zaxis chart)
+               (nobars chart)
+               ))
+
+(defgeneric threed-ribbon-chart-line (chart xypairs colour))
+(defmethod threed-ribbon-chart-line ((chart threed-ribbon-chart) xypairs colour)
+  "Plots a 3D ribbon based on given xy-pairs"
+  (format-wish "$~a line {~&~a~&} ~a"
+               (name chart)
+               (apply #'uiop:strcat 
+                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&" row)) xypairs))
+               (string-downcase (string colour))))
+
+(defgeneric threed-ribbon-chart-area (chart xypairs colour))
+(defmethod threed-ribbon-chart-area ((chart threed-ribbon-chart) xypairs colour)
+  "Plots a 3D ribbon based on given xy-pairs with filled area in front"
+  (format-wish "$~a area {~&~a~&} ~a"
+               (name chart)
+               (apply #'uiop:strcat 
+                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&" row)) xypairs))
+               (string-downcase (string colour))))
 
 ;; ---------------------------------------------------------------------------
 ;; Box Plot
 
 (defclass box-plot (plotchart)
-  ())
+  ((xdata :accessor xdata :initarg :xdata :initform nil)
+   (ydata :accessor ydata :initarg :ydata :initform nil)
+   (orientation :accessor orientation :initarg :orientation :initform :horizontal)))
+
+(defmethod initialize-instance :after ((chart box-plot) &key)
+  (format-wish "set ~a [::Plotchart::createBoxplot ~a {~{ ~a~} } {~{ ~a~} } ~a]" 
+               (name chart) 
+               (widget-path (canvas chart))
+               (xdata chart)
+               (ydata chart)
+               (string-downcase (string (orientation chart)))
+               ))
+
+(defgeneric box-plot-plot (chart series label values))
+(defmethod box-plot-plot ((chart box-plot) series label values)
+  (format-wish "$~a plot ~a ~a { ~{ ~a~} }" 
+               (name chart) series label values))
 
 ;; ---------------------------------------------------------------------------
 ;; Time Chart
 
 (defclass time-chart (plotchart)
-  ())
+  ((time-begin :accessor time-begin :initarg :time-begin :initform nil)
+   (time-end :accessor time-end :initarg :time-end :initform nil)))
+
+(defmethod initialize-instance :after ((chart time-chart) &key num-items barheight ylabelwidth)
+  (format-wish "set ~a [::Plotchart::createTimechart ~a \"~a\" \"~a\" ~a ~a ~a"
+               (name chart)
+               (widget-path (canvas chart))
+               (time-begin chart)
+               (time-end chart)
+               (if num-items num-items "")
+               (if barheight (format nil "-barheight ~d" barheight) "")
+               (if ylabelwidth (format nil "-ylabelwidth ~d" ylabelwidth) "")))
+
+(defgeneric time-chart-period (chart text time-begin time-end &optional colour))
+(defmethod time-chart-period ((chart time-chart) text time-begin time-end &optional colour)
+  (format-wish "$~a period \"~a\" \"~a\" \"~a\" ~a" 
+               (name chart) text time-begin time-end
+               (if colour (string-downcase (string colour)) "")))
+
+(defgeneric time-chart-addperiod (chart time-begin time-end &optional colour))
+(defmethod time-chart-addperiod ((chart time-chart) time-begin time-end &optional colour)
+  (format-wish "$~a addperiod \"~a\" \"~a\" ~a" 
+               (name chart) time-begin time-end
+               (if colour (string-downcase (string colour)) "")))
+
+(defgeneric time-chart-milestone (chart text time &optional colour))
+(defmethod time-chart-milestone ((chart time-chart) text time &optional colour)
+  (format-wish "$~a milestone \"~a\" \"~a\" ~a" 
+               (name chart) text time
+               (if colour (string-downcase (string colour)) "")))
+
+(defgeneric time-chart-addmilestone (chart time &optional colour))
+(defmethod time-chart-addmilestone ((chart time-chart) time &optional colour)
+  (format-wish "$~a addmilestone \"~a\" ~a" 
+               (name chart) time
+               (if colour (string-downcase (string colour)) "")))
+
+(defgeneric time-chart-vertline (chart text time &optional colour))
+(defmethod time-chart-vertline ((chart time-chart) text time &optional colour)
+  (format-wish "$~a vertline \"~a\" \"~a\" ~a" 
+               (name chart) text time
+               (if colour (string-downcase (string colour)) "")))
+
+(defgeneric time-chart-hscroll (chart hscroll))
+(defmethod time-chart-hscroll ((chart time-chart) hscroll)
+  (format-wish "$~a hscroll ~a" (name chart) (name hscroll)))
+
+(defgeneric time-chart-vscroll (chart vscroll))
+(defmethod time-chart-vscroll ((chart time-chart) vscroll)
+  (format-wish "$~a vscroll ~a" (name chart) (name vscroll)))
 
 ;; ---------------------------------------------------------------------------
 ;; Gantt Chart
 
 (defclass gantt-chart (plotchart)
-  ())
+  ((time-begin :accessor time-begin :initarg :time-begin :initform nil)
+   (time-end :accessor time-end :initarg :time-end :initform nil)))
+
+(defmethod initialize-instance :after ((chart time-chart) &key num-items max-width barheight ylabelwidth)
+  (format-wish "set ~a [::Plotchart::createTimechart ~a \"~a\" \"~a\" ~a ~a ~a ~a"
+               (name chart)
+               (widget-path (canvas chart))
+               (time-begin chart)
+               (time-end chart)
+               (if num-items num-items (if max-width "1" "")) ; note, max-width must be second
+               (if max-width max-width "")
+               (if barheight (format nil "-barheight ~d" barheight) "")
+               (if ylabelwidth (format nil "-ylabelwidth ~d" ylabelwidth) "")))
+
+(defgeneric gantt-chart-task (chart text time-begin time-end completed))
+(defmethod gantt-chart-task ((chart gantt-chart) text time-begin time-end completed)
+  (format-wish "$~a task \"~a\" \"~a\" \"~a\" ~f" 
+               (name chart) text time-begin time-end completed))
+
+(defgeneric gantt-chart-milestone (chart text time &optional colour))
+(defmethod gantt-chart-milestone ((chart gantt-chart) text time &optional colour)
+  (format-wish "$~a milestone \"~a\" \"~a\" ~a" 
+               (name chart) text time
+               (if colour (string-downcase (string colour)) "")))
+
+(defgeneric gantt-chart-vertline (chart text time))
+(defmethod gantt-chart-vertline ((chart gantt-chart) text time)
+  (format-wish "$~a vertline \"~a\" \"~a\"" 
+               (name chart) text time))
+
+(defgeneric gantt-chart-connect (chart from to))
+(defmethod gantt-chart-connect ((chart gantt-chart) from to)
+  (format-wish "$~a connect {~{ ~a~} } {~{ ~a~} }" 
+               (name chart) from to))
+
+(defgeneric gantt-chart-summary (chart text args))
+(defmethod gantt-chart-summary ((chart gantt-chart) text args)
+  (format-wish "$~a summary \"~a\" {~{ ~a~} }" 
+               (name chart) text args))
+
+(defgeneric gantt-chart-color (chart keyword newcolour))
+(defmethod gantt-chart-color ((chart gantt-chart) keyword newcolour)
+  (format-wish "$~a color ~a ~a" 
+               (name chart) 
+               (string-downcase (string keyword))
+               (string-downcase (string newcolour))))
+
+(defgeneric gantt-chart-colour (chart keyword newcolour))
+(defmethod gantt-chart-colour ((chart gantt-chart) keyword newcolour)
+  (format-wish "$~a color ~a ~a" 
+               (name chart) 
+               (string-downcase (string keyword))
+               (string-downcase (string newcolour))))
+
+(defgeneric gantt-chart-font (chart keyword newfont))
+(defmethod gantt-chart-font ((chart gantt-chart) keyword newfont)
+  (format-wish "$~a font ~a \"~a\"" 
+               (name chart) 
+               (string-downcase (string keyword))
+               newfont))
+
+(defgeneric gantt-chart-hscroll (chart hscroll))
+(defmethod gantt-chart-hscroll ((chart gantt-chart) hscroll)
+  (format-wish "$~a hscroll ~a" (name chart) (name hscroll)))
+
+(defgeneric gantt-chart-vscroll (chart vscroll))
+(defmethod gantt-chart-vscroll ((chart gantt-chart) vscroll)
+  (format-wish "$~a vscroll ~a" (name chart) (name vscroll)))
 
 ;; ---------------------------------------------------------------------------
 ;; Right Axis
 
 (defclass right-axis (plotchart)
-  ())
+  ((yaxis :accessor yaxis :initarg :yaxis :initform '(0 10 1))))
+
+(defmethod initialize-instance :after ((chart right-axis) &key)
+  (format-wish "set ~a [::Plotchart::createRightAxis ~a {~{ ~d~} }]" 
+               (name chart) 
+               (widget-path (canvas chart))
+               (yaxis chart)))
 
 ;; ---------------------------------------------------------------------------
 ;; Table Chart
 
 (defclass table-chart (plotchart)
-  ())
+  ((columns :accessor columns :initarg :columns :initform nil)
+   (widths :accessor widths :initarg :widths :initform nil)))
+
+(defmethod initialize-instance :after ((chart table-chart) &key)
+  (format-wish "set ~a [::Plotchart::createTableChart ~a {~{ ~d~} } ~a]" 
+               (name chart) 
+               (widget-path (canvas chart))
+               (columns chart)
+               (if (widths chart)
+                 (if (listp (widths chart))
+                   (format nil "{~{ ~a~} }" (widths chart)) ; either a list 
+                   (widths chart)) ; or constant width for all columns
+                 "")))
+
+(defgeneric table-chart-row (chart items))
+(defmethod table-chart-row ((chart table-chart) items)
+  (format-wish "$~a row {~{ \"~a\"~} }" (name chart) items))
+
+(defgeneric table-chart-separator (chart))
+(defmethod table-chart-separator ((chart table-chart))
+  (format-wish "$~a row" (name chart)))
+
+(defgeneric table-chart-cellconfigure (chart &key background cell font anchor justify))
+(defmethod table-chart-cellconfigure ((chart table-chart) &key background cell font anchor justify)
+  (format-wish "$~a cellconfigure ~a"
+               (name chart)
+               (let ((result ""))
+                 (when background
+                   (setf result (format nil "~a -background ~a" result (string-downcase (string background)))))
+                 (when cell
+                   (setf result (format nil "~a -cell ~a" result (string-downcase (string cell)))))
+                 (when font
+                   (setf result (format nil "~a -font \"~a\"" result (string-downcase (string font)))))
+                 (when anchor
+                   (setf result (format nil "~a -anchor ~a" result (string-downcase (string result)))))
+                 (when justify
+                   (setf result (format nil "~a -justify ~a" result (string-downcase (string justify)))))
+                 result)))
 
 ;; ---------------------------------------------------------------------------
 ;; Ternary Diagram
 
 (defclass ternary-diagram (plotchart)
   ())
+
+(defmethod initialize-instance :after ((chart ternary-diagram) &key box axesbox fractions steps)
+  (format-wish "set ~a [::Plotchart::createTernaryDiagram ~a ~a"
+               (name chart)
+               (widget-path (canvas chart))
+               (let ((result ""))
+                 (when box 
+                   (setf result (format nil "~a -box {~{ ~a~} }" result box)))
+                 (when axesbox
+                   (setf result (format nil "~a -axesbox {~{ ~a~} }" result axesbox)))
+                 (when fractions
+                   (setf result (format nil "~a -fractions ~a" 
+                                        result 
+                                        (string-downcase (string fractions)))))
+                 (when steps
+                   (setf result (format nil "~a -step ~d" result steps)))
+                 result)))
+
+(defgeneric ternary-diagram-plot (chart series xcrd ycrd zcrd text &optional direction))
+(defmethod ternary-diagram-plot ((chart ternary-diagram) series xcrd ycrd zcrd text &optional direction)
+  (format-wish "$~a plot ~a ~f ~f ~f \"~a\" ~a"
+               (name chart) series xcrd ycrd zcrd text
+               (if direction direction "")))
+
+(defgeneric ternary-diagram-line (chart series coords))
+(defmethod ternary-diagram-line ((chart ternary-diagram) series coords)
+  "Draw a continuous line given a series of coordinates (triplets)"
+  (format-wish "$~a line ~a {~a}"
+               (name chart) 
+               series 
+               (let ((result ""))
+                 (dolist (coord coords)
+                   (setf result (format nil "~a {~{ ~a~} }" result coord)))
+                 result)))
+
+(defgeneric ternary-diagram-fill (chart series coords))
+(defmethod ternary-diagram-fill ((chart ternary-diagram) series coords)
+  "Fill a polygon defined by series of coordinates (triplets)"
+  (format-wish "$~a fill ~a {~a}"
+               (name chart) 
+               series 
+               (let ((result ""))
+                 (dolist (coord coords)
+                   (setf result (format nil "~a {~{ ~a~} }" result coord)))
+                 result)))
+
+(defgeneric ternary-diagram-text (chart xtext ytext ztext))
+(defmethod ternary-diagram-text ((chart ternary-diagram) xtext ytext ztext)
+  "Displays given text at each corner"
+  (format-wish "$~a text \"~a\" \"~a\" \"~a\""
+               (name chart) xtext ytext ztext))
+
+(defgeneric ternary-diagram-ticklines (chart &optional colour))
+(defmethod ternary-diagram-ticklines ((chart ternary-diagram) &optional colour)
+  "Displays ticklines in optional colour"
+  (format-wish "$~a ticklines ~a"
+               (name chart)
+               (if colour (string-downcase (string colour)) "")))
 
 (defgeneric ternary-diagram-dataconfig (chart series &key colour color type symbol
                                               radius width filled fillcolour style))
@@ -809,6 +1162,40 @@
 ;; Status timeline
 
 (defclass status-timeline (plotchart)
-  ())
+  ((xaxis :accessor xaxis :initarg :xaxis :initform '(0 10 1))
+   (ylabels :accessor ylabels :initarg :ylabels :initform nil)))
 
+(defmethod initialize-instance :after ((chart status-timeline) &key box axesbox showxaxis)
+  (format-wish "set ~a [::Plotchart::createStatusTimeline ~a {~{ ~a~} } {~{ ~a~} }~a"
+               (name chart)
+               (widget-path (canvas chart))
+               (xaxis chart)
+               (ylabels chart)
+               (let ((result ""))
+                 (when box 
+                   (setf result (format nil "~a -box {~{ ~a~} }" result box)))
+                 (when axesbox
+                   (setf result (format nil "~a -axesbox {~{ ~a~} }" result axesbox)))
+                 (when showxaxis
+                   (setf result (format nil "~a -xaxis ~a" 
+                                        result 
+                                        (string-downcase (string showxaxis)))))
+                 result)))
+
+(defgeneric status-timeline-plot (chart series item start stop &optional colour))
+(defmethod status-timeline-plot ((chart status-timeline) series item start stop &optional colour)
+  "Draws a bar in given colour from start to stop"
+  (format-wish "$~a plot ~a \"~a\" ~f ~f ~a"
+               (name chart)
+               series 
+               item
+               start 
+               stop
+               (if colour (string-downcase (string colour)) "")))
+
+(defgeneric status-timeline-vertline (chart text time))
+(defmethod status-timeline-vertline ((chart status-timeline) text time)
+  "Draws a vertical line to mark a significant moment"
+  (format-wish "$~a vertline ~a \"~a\" ~f"
+               (name chart) text time))
 
