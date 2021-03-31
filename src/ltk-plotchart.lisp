@@ -12,6 +12,7 @@
 ;; - $anyplot object itemtype series args
 ;; - $anyplot deletedata
 ;; - normal-plot - requires math::statistics package
+;; - 3dplots - plotfunc, plotfuncont - not sure how to handle function (callback?)
 
 (in-package :ltk-plotchart)
 
@@ -329,24 +330,7 @@
 ;; ---------------------------------------------------------------------------
 ;; Strip Chart
 
-(defclass strip-chart (plotchart)
-  ())
-
-(defgeneric strip-chart-plot (chart series x-coord y-coord))
-(defmethod strip-chart-plot ((chart strip-chart) series x-coord y-coord)
-  "Adds a data point to the chart"
-  (format-wish "$~a plot ~a ~f ~f" (name chart) series x-coord y-coord))
-
-(defgeneric strip-chart-dataconfig (chart series &key colour color type symbol
-                                          radius width filled fillcolour style))
-(defmethod strip-chart-dataconfig ((chart strip-chart) series &key colour color type
-                                                       symbol radius width filled
-                                                       fillcolour style)
-  (format-wish "$~a dataconfig ~a ~a" 
-               (name chart) 
-               series 
-               (make-config-args colour color type symbol radius width filled
-                                 fillcolour style)))
+(defclass strip-chart (xy-plot))
 
 ;; ---------------------------------------------------------------------------
 ;; TX Plot
@@ -407,7 +391,22 @@
 ;; Polar Plot
 
 (defclass polar-plot (plotchart)
-  ())
+  ((radius-data :accessor radius-data :initarg :radius-data :initform '(10 1))))
+
+(defmethod initialize-instance :after ((chart polar-plot) &key xlabels ylabels box
+                                                          axesbox timeformat gmt
+                                                          axestozero isometric)
+  (format-wish "set ~a [::Plotchart::createPolarPlot ~a {~{ ~d~} }~a]" 
+               (name chart) 
+               (widget-path (canvas chart))
+               (radius-data chart)
+               (make-xy-args xlabels ylabels box axesbox timeformat gmt axestozero isometric)
+               ))
+
+(defgeneric polar-plot-plot (chart series radius angle))
+(defmethod polar-plot-plot ((chart polar-plot) series radius angle)
+  "Adds a data point to the chart"
+  (format-wish "$~a plot ~a ~f ~f" (name chart) series radius angle))
 
 (defgeneric polar-plot-dataconfig (chart series &key colour color type symbol
                                          radius width filled fillcolour style))
@@ -424,13 +423,60 @@
 ;; Windrose
 
 (defclass windrose (plotchart)
-  ())
+  ((radius-data :accessor radius-data :initarg :radius-data :initform '(10 1))
+   (sectors :accessor sectors :initarg :sectors :initform 16)))
+
+(defmethod initialize-instance :after ((chart windrose))
+  (format-wish "set ~a [::Plotchart::createWindrose ~a {~{ ~d~} } ~a]" 
+               (name chart) 
+               (widget-path (canvas chart))
+               (radius-data chart)
+               (sectors chart)
+               ))
+
+(defgeneric windrose-plot (chart data colour))
+(defmethod windrose-plot ((chart windrose) data colour)
+  "Draw the given data into the existing spokes"
+  (format-wish "$~a plot {~{ ~d~} } ~a" (name chart) data colour))
 
 ;; ---------------------------------------------------------------------------
 ;; Isometric Plot
 
 (defclass isometric-plot (plotchart)
-  ())
+  ((xaxis :accessor xaxis :initarg :xaxis :initform '(0 10))
+   (yaxis :accessor yaxis :initarg :yaxis :initform '(0 10))
+   (stepsize :accessor stepsize :initarg :stepsize :initform :noaxes)))
+
+(defmethod initialize-instance :after ((chart isometric-plot))
+  (format-wish "set ~a [::Plotchart::createHistogram ~a {~{ ~d~} } {~{ ~d~} } ~a]" 
+               (name chart) 
+               (widget-path (canvas chart))
+               (xaxis chart)
+               (yaxis chart)
+               (if (numberp (stepsize chart))
+                 (format nil "~f" (stepsize chart))
+                 (string-downcase (string (stepsize chart))))
+               ))
+
+(defgeneric isometric-plot-rectangle (chart x1 y1 x2 y2 colour))
+(defmethod isometric-plot-rectangle ((chart isometric-plot) x1 y1 x2 y2 colour)
+  "Draw the outlines of specified rectangle"
+  (format-wish "$~a plot rectangle ~f ~f ~f ~f ~a" (name chart) x1 y1 x2 y2 colour))
+
+(defgeneric isometric-plot-filled-rectangle (chart x1 y1 x2 y2 colour))
+(defmethod isometric-plot-filled-rectangle ((chart isometric-plot) x1 y1 x2 y2 colour)
+  "Draw and fill specified rectangle"
+  (format-wish "$~a plot filled-rectangle ~f ~f ~f ~f ~a" (name chart) x1 y1 x2 y2 colour))
+
+(defgeneric isometric-plot-circle (chart xc yc radius colour))
+(defmethod isometric-plot-circle ((chart isometric-plot) xc yc radius colour)
+  "Draw the outlines of specified circle"
+  (format-wish "$~a plot circle ~f ~f ~f ~a" (name chart) xc yc radius colour))
+
+(defgeneric isometric-plot-filled-circle (chart xc yc radius colour))
+(defmethod isometric-plot-filled-circle ((chart isometric-plot) xc yc radius colour)
+  "Draw and fill specified circle"
+  (format-wish "$~a plot filled-circle ~f ~f ~f ~a" (name chart) xc yc radius colour))
 
 ;; ---------------------------------------------------------------------------
 ;; Histogram 
@@ -474,19 +520,109 @@
 ;; 3D Plot
 
 (defclass threed-plot (plotchart)
-  ())
+  ((xaxis :accessor xaxis :initarg :xaxis :initform '(0 10 1))
+   (yaxis :accessor yaxis :initarg :yaxis :initform '(0 10 1))
+   (zaxis :accessor zaxis :initarg :zaxis :initform '(0 10 1))))
+
+(defmethod initialize-instance :after ((chart threed-plot) &key xlabels)
+  (format-wish "set ~a [::Plotchart::create3DPlot ~a {~{ ~d~} } {~{ ~d~} } {~{ ~d~} } ~a]" 
+               (name chart) 
+               (widget-path (canvas chart))
+               (xaxis chart)
+               (yaxis chart)
+               (zaxis chart)
+               (if xlabels (format nil "-xlabels {~{ ~a~} }" xlabels) "")
+               ))
+
+(defgeneric threed-plot-gridsize (chart nxcells nycells))
+(defmethod threed-plot-gridsize ((chart threed-plot) nxcells nycells)
+  "Sets the grid resolution in the 3d plot"
+  (format-wish "$~a gridsize ~d ~d" (name chart) nxcells nycells))
+
+(defgeneric threed-plot-plotdata (chart data))
+(defmethod threed-plot-plotdata ((chart threed-plot) data)
+  "Plots given list-of-lists data"
+  (format-wish "$~a plotdata {~&~a~&}"
+               (name chart)
+               (apply #'uiop:strcat 
+                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&")) data))))
+
+(defgeneric threed-plot-interpolatedata (chart data contours))
+(defmethod threed-plot-interpolatedata ((chart threed-plot) data contours)
+  "Plots given list-of-lists data with interpolated contours"
+  (format-wish "$~a plotdata {~&~a~&} {~{ ~f~} }"
+               (name chart)
+               (apply #'uiop:strcat 
+                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&")) data))
+               contours))
+
+(defgeneric threed-plot-colour (chart fill border))
+(defmethod threed-plot-colour ((chart threed-plot) fill border)
+  "Sets the fill and border colour"
+  (format-wish "$~a colour ~a ~a" 
+               (name chart) 
+               (string-downcase (string fill)) 
+               (string-downcase (string border))))
+
+(defgeneric threed-plot-color (chart fill border))
+(defmethod threed-plot-color ((chart threed-plot) fill border)
+  "Sets the fill and border colour"
+  (format-wish "$~a colour ~a ~a" 
+               (name chart) 
+               (string-downcase (string fill)) 
+               (string-downcase (string border))))
+
+(defgeneric threed-plot-ribbon (chart yzpairs))
+(defmethod threed-plot-ribbon ((chart threed-plot) yzpairs)
+  "Plots a ribbon based on given yz-pairs"
+  (format-wish "$~a ribbon {~&~a~&}"
+               (name chart)
+               (apply #'uiop:strcat 
+                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&")) yzpairs))))
 
 ;; ---------------------------------------------------------------------------
 ;; 3D Ribbon Plot
 
 (defclass threed-ribbon-plot (plotchart)
-  ())
+  ((yaxis :accessor yaxis :initarg :yaxis :initform '(0 10 1))
+   (zaxis :accessor zaxis :initarg :zaxis :initform '(0 10 1))))
+
+(defmethod initialize-instance :after ((chart threed-ribbon-plot))
+  (format-wish "set ~a [::Plotchart::create3DRibbonPlot ~a {~{ ~d~} } {~{ ~d~} }]" 
+               (name chart) 
+               (widget-path (canvas chart))
+               (yaxis chart)
+               (zaxis chart)
+               ))
+
+(defgeneric threed-ribbon-plot-colour (chart fill border))
+(defmethod threed-ribbon-plot-colour ((chart threed-ribbon-plot) fill border)
+  "Sets the fill and border colour"
+  (format-wish "$~a colour ~a ~a" 
+               (name chart) 
+               (string-downcase (string fill)) 
+               (string-downcase (string border))))
+
+(defgeneric threed-ribbon-plot-color (chart fill border))
+(defmethod threed-ribbon-plot-color ((chart threed-ribbon-plot) fill border)
+  "Sets the fill and border colour"
+  (format-wish "$~a colour ~a ~a" 
+               (name chart) 
+               (string-downcase (string fill)) 
+               (string-downcase (string border))))
+
+(defgeneric threed-ribbon-plot-plot (chart yzpairs))
+(defmethod threed-ribbon-plot-plot ((chart threed-ribbon-plot) yzpairs)
+  "Plots a ribbon based on given yz-pairs"
+  (format-wish "$~a plot {~&~a~&}"
+               (name chart)
+               (apply #'uiop:strcat 
+                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&")) yzpairs))))
 
 ;; ---------------------------------------------------------------------------
 ;; Pie Chart
 
-(defclass pie-chart (plotchart)
-  ())
+(defclass pie-chart (plotchart))
 
 (defmethod initialize-instance :after ((chart pie-chart) &key)
   (format-wish "set ~a [::Plotchart::createPiechart ~a]" (name chart) (widget-path (canvas chart))))
@@ -513,29 +649,102 @@
 (defmethod pie-chart-plot ((chart pie-chart) data)
   (format-wish "$~a plot {~a}" (name chart) (data2string data)))
 
+(defgeneric pie-chart-colors (chart &rest colours))
+(defmethod pie-chart-colors ((chart pie-chart) &rest colours)
+  "Sets the colours for the pie slices"
+  (format-wish "$~a colours ~{~a ~}" 
+               (name chart)
+               (mapcar #'(lambda (c) (string-downcase (string c))) colours)))
+
+(defgeneric pie-chart-colours (chart &rest colours))
+(defmethod pie-chart-colours ((chart pie-chart) &rest colours)
+  "Sets the colours for the pie slices"
+  (format-wish "$~a colours ~{~a ~}" 
+               (name chart)
+               (mapcar #'(lambda (c) (string-downcase (string c))) colours)))
+
+(defgeneric pie-chart-explode (chart segment))
+(defmethod pie-chart-explode ((chart pie-chart) segment)
+  "Displays segment number out of the circle"
+  (format-wish "$~a explode ~d" (name chart) segment))
+
 ;; ---------------------------------------------------------------------------
 ;; Spiral Pie 
 
-(defclass spiral-pie (plotchart)
-  ())
+(defclass spiral-pie (pie-chart))
 
 ;; ---------------------------------------------------------------------------
 ;; Radial Chart
 
 (defclass radial-chart (plotchart)
-  ())
+  ((names :accessor names :initarg :names :initform nil)
+   (scale :accessor scale :initarg :scale :initform 1.0)
+   (style :accessor style :initarg :style :initform "lines")))
+
+(defmethod initialize-instance :after ((chart radial-chart) &key)
+  (format-wish "set ~a [::Plotchart::createRadialchart {~{ ~a~} } ~f ~a]" 
+               (name chart) 
+               (widget-path (canvas chart))
+               (names chart)
+               (scale chart)
+               (string-downcase (string (style chart)))))
+
+(defgeneric radial-chart-plot (chart data colour &optional thickness))
+(defmethod radial-chart-plot ((chart radial-chart) data colour &optional thickness)
+  (format-wish "$~a plot { ~{ ~a~} } ~a ~a" 
+               (name chart) 
+               data 
+               (string-downcase (string colour)) 
+               (if thickness thickness "")))
+
+(defgeneric radial-chart-colors (chart &rest colours))
+(defmethod radial-chart-colors ((chart radial-chart) &rest colours)
+  "Sets the colours for the radial spokes"
+  (format-wish "$~a colours ~{~a ~}" 
+               (name chart)
+               (mapcar #'(lambda (c) (string-downcase (string c))) colours)))
+
+(defgeneric radial-chart-colours (chart &rest colours))
+(defmethod radial-chart-colours ((chart radial-chart) &rest colours)
+  "Sets the colours for the pie spokes"
+  (format-wish "$~a colours ~{~a ~}" 
+               (name chart)
+               (mapcar #'(lambda (c) (string-downcase (string c))) colours)))
 
 ;; ---------------------------------------------------------------------------
 ;; Bar Chart
 
 (defclass bar-chart (plotchart)
-  ())
+  ((xlabels :accessor xlabels :initarg :xlabels :initform nil)
+   (yaxis :accessor yaxis :initarg :yaxis :initform '(0 10 1))
+   (noseries :accessor noseries :initarg :noseries :initform 1)))
+
+(defmethod initialize-instance :after ((chart bar-chart) &key xlabelangle)
+  (format-wish "set ~a [::Plotchart::createBarChart ~a {~{ ~a~} } {~{ ~d~} } ~a~a]" 
+               (name chart) 
+               (widget-path (canvas chart))
+               (xlabels chart)
+               (yaxis chart)
+               (string-downcase (string (noseries chart)))
+               (if xlabelangle (format nil " -xlabelangle ~d" xlabelangle) "")
+               ))
 
 ;; ---------------------------------------------------------------------------
 ;; Horizontal Bar Chart
 
 (defclass horizontal-bar-chart (plotchart)
-  ())
+  ((xaxis :accessor xaxis :initarg :xaxis :initform '(0 10 1))
+   (ylabels :accessor ylabels :initarg :ylabels :initform nil)
+   (noseries :accessor noseries :initarg :noseries :initform 1)))
+
+(defmethod initialize-instance :after ((chart bar-chart) &key)
+  (format-wish "set ~a [::Plotchart::createBarChart ~a {~{ ~d~} } {~{ ~a~} } ~a]" 
+               (name chart) 
+               (widget-path (canvas chart))
+               (xaxis chart)
+               (ylabels chart)
+               (string-downcase (string (noseries chart)))
+               ))
 
 ;; ---------------------------------------------------------------------------
 ;; 3D Bar Chart

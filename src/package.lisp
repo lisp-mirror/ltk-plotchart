@@ -29,15 +29,26 @@
     :histogram-plotcumulative
     :horizontal-bar-chart
     :isometric-plot
+    :isometric-plot-circle
+    :isometric-plot-filled-circle
+    :isometric-plot-filled-rectangle
+    :isometric-plot-rectangle
     :logx-y-minmax
     :logx-y-plot
     :logx-logy-minmax
     :logx-logy-plot
     :pie-chart
+    :pie-chart-colors
+    :pie-chart-colours
+    :pie-chart-explode
     :pie-chart-plot
     :polar-plot
     :polar-plot-dataconfig
+    :polar-plot-plot
     :radial-chart
+    :radial-chart-colors
+    :radial-chart-colours
+    :radial-chart-plot
     :right-axis
     :spiral-pie
     :status-timeline
@@ -49,13 +60,23 @@
     :ternary-diagram-dataconfig
     :threed-bar-chart
     :threed-plot
+    :threed-plot-color
+    :threed-plot-colour
+    :threed-plot-gridsize
+    :threed-plot-interpolatedata
+    :threed-plot-plotdata
+    :threed-plot-ribbon
     :threed-ribbon-chart
     :threed-ribbon-plot
+    :threed-ribbon-plot-color
+    :threed-ribbon-plot-colour
+    :threed-ribbon-plot-plot
     :time-chart
     :tx-plot
     :tx-plot-dataconfig
     :tx-plot-plot
     :windrose
+    :windrose-plot
     :x-logy-minmax
     :x-logy-plot
     :xy-plot
