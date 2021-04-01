@@ -1,7 +1,7 @@
 ;; Translation of testtxplot.tcl
 
-(require 'asdf)
-(require 'ltk-plotchart)
+(require "asdf")
+(require "ltk-plotchart")
 (use-package :ltk)
 (use-package :ltk-plotchart)
 

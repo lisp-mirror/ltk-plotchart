@@ -65,6 +65,8 @@
     :radial-chart-colours
     :radial-chart-plot
     :right-axis
+    :right-axis-dataconfig
+    :right-axis-plot
     :spiral-pie
     :status-timeline
     :status-timeline-plot
@@ -115,8 +117,11 @@
     :x-logy-plot
     :xy-plot
     :xy-plot-dataconfig
+    :xy-plot-interval
     :xy-plot-minmax
     :xy-plot-plot
     :xy-plot-plotlist
+    :xy-plot-rchart
     :xy-plot-region
+    :xy-plot-trend
     ))

@@ -14,6 +14,7 @@
 ;; - normal-plot - requires math::statistics package
 ;; - 3dplots - plotfunc, plotfuncont - not sure how to handle function (callback?)
 ;; - $table formatcommand procname - not sure how to handle procedures
+;; - status-timeline-vertline args for line definition - no description given in documentation
 
 (in-package :ltk-plotchart)
 
@@ -294,6 +295,25 @@
   (format-wish "$~a minmax ~a ~f ~f ~f"
                (name chart) series xcoord ymin ymax))
 
+(defgeneric xy-plot-trend (chart series xcoord ycoord))
+(defmethod xy-plot-trend ((chart xy-plot) series xcoord ycoord)
+  "Draws or updates a trend line, given data so far"
+  (format-wish "$~a trend ~a ~f ~f"
+               (name chart) series xcoord ycoord))
+
+(defgeneric xy-plot-rchart (chart series xcoord ycoord))
+(defmethod xy-plot-rchart ((chart xy-plot) series xcoord ycoord)
+  "Like plot, but adds +/- s.d. line"
+  (format-wish "$~a rchart ~a ~f ~f"
+               (name chart) series xcoord ycoord))
+
+(defgeneric xy-plot-interval (chart series xcoord ymin ymax &optional ycenter))
+(defmethod xy-plot-interval ((chart xy-plot) series xcoord ymin ymax &optional ycenter)
+  "Adds a vertical error interval"
+  (format-wish "$~a interval ~a ~f ~f ~f ~a"
+               (name chart) series xcoord ymin ymax
+               (if ycenter ycenter "")))
+
 (defgeneric xy-plot-dataconfig (chart series &key colour color type symbol
                                       radius width filled fillcolour style))
 (defmethod xy-plot-dataconfig ((chart xy-plot) series &key colour color type
@@ -309,9 +329,9 @@
                                 fillcolour style &optional smooth)
   (let ((result ""))
     (when color
-      (setf result (format nil "~a -colour ~a" result color)))
+      (setf result (format nil "~a -colour ~a" result (string-downcase (string color)))))
     (when colour
-      (setf result (format nil "~a -colour ~a" result colour)))
+      (setf result (format nil "~a -colour ~a" result (string-downcase (string colour)))))
     (when type
       (setf result (format nil "~a -type ~a" result (string-downcase (string type)))))
     (when symbol
@@ -327,6 +347,23 @@
     (when smooth
       (setf result (format nil "~a -smooth ~a" result smooth)))
     result))
+
+;; $xyplot box-and-whiskers series xcrd ycrd
+;; $xyplot vector series xcrd ycrd ucmp vcmp
+;; $xyplot vectorconfig series -option value ...
+;; $xyplot dot series xcrd ycrd value
+;; $xyplot dotconfig series -option value ...
+;; $xyplot contourlines xcrd ycrd values ?classes?
+;; $xyplot contourlinesfunctionvalues xvec yvec valuesmat ?classes?
+;; $xyplot contourfill xcrd ycrd values ?classes?
+;; $xyplot contourbox xcrd ycrd values ?classes?
+;; $xyplot colorMap colours
+;; $xyplot legendisolines values classes
+;; $xyplot legendshades values classes
+;; $xyplot grid xcrd ycrd
+;; $xyplot xband ymin ymax
+;; $xyplot yband xmin xmax
+;; $xyplot labeldot x y text orient
 
 ;; ---------------------------------------------------------------------------
 ;; Strip Chart
@@ -398,7 +435,7 @@
 (defmethod initialize-instance :after ((chart polar-plot) &key xlabels ylabels box
                                                           axesbox timeformat gmt
                                                           axestozero isometric)
-  (format-wish "set ~a [::Plotchart::createPolarPlot ~a {~{ ~d~} }~a]" 
+  (format-wish "set ~a [::Plotchart::createPolarplot ~a {~{ ~d~} }~a]" 
                (name chart) 
                (widget-path (canvas chart))
                (radius-data chart)
@@ -552,7 +589,7 @@
 (defgeneric threed-plot-interpolatedata (chart data contours))
 (defmethod threed-plot-interpolatedata ((chart threed-plot) data contours)
   "Plots given list-of-lists data with interpolated contours"
-  (format-wish "$~a plotdata {~&~a~&} {~{ ~f~} }"
+  (format-wish "$~a interpolatedata {~&~a~&} {~{ ~f~} }"
                (name chart)
                (apply #'uiop:strcat 
                       (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&" row)) data))
@@ -729,16 +766,19 @@
                (widget-path (canvas chart))
                (xlabels chart)
                (yaxis chart)
-               (string-downcase (string (noseries chart)))
+               (if (numberp (noseries chart)) 
+                 (noseries chart)
+                 (string-downcase (string (noseries chart))))
                (if xlabelangle (format nil " -xlabelangle ~d" xlabelangle) "")
                ))
 
 (defgeneric bar-chart-plot (chart series ydata colour &optional direction brightness))
 (defmethod bar-chart-plot ((chart bar-chart) series ydata colour &optional direction brightness)
-  (format-wish "$~a plot ~a { ~{ ~a~} } ~a ~a" 
+  (format-wish "$~a plot ~a { ~{ ~a~} } ~a ~a ~a" 
                (name chart) 
                series
                ydata 
+               (string-downcase (string colour))
                (if direction (string-downcase (string direction)) "")
                (if brightness (string-downcase (string brightness)) "")))
 
@@ -767,16 +807,18 @@
                (widget-path (canvas chart))
                (xaxis chart)
                (ylabels chart)
-               (string-downcase (string (noseries chart)))
-               ))
+               (if (numberp (noseries chart))
+                 (noseries chart)
+                 (string-downcase (string (noseries chart))))))
 
 (defgeneric horizontal-bar-chart-plot (chart series xdata colour &optional direction brightness))
 (defmethod horizontal-bar-chart-plot ((chart horizontal-bar-chart) series xdata colour 
                                                                    &optional direction brightness)
-  (format-wish "$~a plot ~a { ~{ ~a~} } ~a ~a" 
+  (format-wish "$~a plot ~a { ~{ ~a~} } ~a ~a ~a" 
                (name chart) 
                series
                xdata 
+               (string-downcase (string colour))
                (if direction (string-downcase (string direction)) "")
                (if brightness (string-downcase (string brightness)) "")))
 
@@ -908,14 +950,14 @@
    (time-end :accessor time-end :initarg :time-end :initform nil)))
 
 (defmethod initialize-instance :after ((chart time-chart) &key num-items barheight ylabelwidth)
-  (format-wish "set ~a [::Plotchart::createTimechart ~a \"~a\" \"~a\" ~a ~a ~a"
+  (format-wish "set ~a [::Plotchart::createTimechart ~a \"~a\" \"~a\" ~a~a~a]"
                (name chart)
                (widget-path (canvas chart))
                (time-begin chart)
                (time-end chart)
                (if num-items num-items "")
-               (if barheight (format nil "-barheight ~d" barheight) "")
-               (if ylabelwidth (format nil "-ylabelwidth ~d" ylabelwidth) "")))
+               (if barheight (format nil " -barheight ~d" barheight) "")
+               (if ylabelwidth (format nil " -ylabelwidth ~d" ylabelwidth) "")))
 
 (defgeneric time-chart-period (chart text time-begin time-end &optional colour))
 (defmethod time-chart-period ((chart time-chart) text time-begin time-end &optional colour)
@@ -962,8 +1004,8 @@
   ((time-begin :accessor time-begin :initarg :time-begin :initform nil)
    (time-end :accessor time-end :initarg :time-end :initform nil)))
 
-(defmethod initialize-instance :after ((chart time-chart) &key num-items max-width barheight ylabelwidth)
-  (format-wish "set ~a [::Plotchart::createTimechart ~a \"~a\" \"~a\" ~a ~a ~a ~a"
+(defmethod initialize-instance :after ((chart gantt-chart) &key num-items max-width barheight ylabelwidth)
+  (format-wish "set ~a [::Plotchart::createTimechart ~a \"~a\" \"~a\" ~a ~a ~a ~a]"
                (name chart)
                (widget-path (canvas chart))
                (time-begin chart)
@@ -1039,6 +1081,23 @@
                (name chart) 
                (widget-path (canvas chart))
                (yaxis chart)))
+
+(defgeneric right-axis-plot (chart series x-coord y-coord))
+(defmethod right-axis-plot ((chart right-axis) series x-coord y-coord)
+  "Adds a data point to the chart"
+  (format-wish "$~a plot ~a ~f ~f" (name chart) series x-coord y-coord))
+
+(defgeneric right-axis-dataconfig (chart series &key colour color type symbol
+                                      radius width filled fillcolour style))
+(defmethod right-axis-dataconfig ((chart right-axis) series 
+                                                     &key colour color type
+                                                     symbol radius width filled
+                                                     fillcolour style)
+  (format-wish "$~a dataconfig ~a ~a" 
+               (name chart) 
+               series
+               (make-config-args colour color type symbol radius width filled
+                                 fillcolour style)))
 
 ;; ---------------------------------------------------------------------------
 ;; Table Chart
