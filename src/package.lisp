@@ -67,18 +67,23 @@
     :cell-configure
     :color 
     :colors
+    :color-map
     :colour
     :colours
+    :colour-map
     :config
     :connect
     :corner-text
     :data-config
     :dot-config
     :draw-circle
+    :draw-contour-lines
+    :draw-contour-lines-function-values
     :draw-dot
     :draw-filled-circle
     :draw-filled-polygon
     :draw-filled-rectangle
+    :draw-grid
     :draw-label-dot
     :draw-line
     :draw-rectangle
@@ -93,6 +98,8 @@
     :interval
     :legend
     :legend-config
+    :legend-isometric-lines
+    :legend-shades
     :milestone
     :minmax
     :period
@@ -102,6 +109,7 @@
     :plot-cumulative
     :plot-data
     :plot-list
+    :plot-pack
     :rchart
     :region
     :remove-from-legend

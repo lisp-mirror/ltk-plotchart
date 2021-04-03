@@ -12,6 +12,9 @@
 ;; - 3dplots - plotfunc, plotfuncont - not sure how to handle function (callback?)
 ;; - $table formatcommand procname - not sure how to handle procedures
 ;; - status-timeline-vertline args for line definition - no description given in documentation
+;; - no options to plot-pack - &key and &rest ? 
+
+;; -- TODO: chart:task for gantt must return descriptor for use in summary/connect
 
 ;; Name changes:
 ;;
@@ -94,7 +97,7 @@
   ())
 
 (defmethod initialize-instance :after ((chart gantt-chart) &key time-begin time-end num-items max-width bar-height ylabel-width)
-  (format-wish "set ~a [::Plotchart::createTimechart ~a \"~a\" \"~a\" ~a ~a ~a ~a]"
+  (format-wish "set ~a [::Plotchart::createGanttchart ~a \"~a\" \"~a\" ~a ~a ~a ~a]"
                (name chart)
                (widget-path (canvas chart))
                time-begin 
@@ -288,7 +291,7 @@
   ())
 
 (defmethod initialize-instance :after ((chart radial-chart) &key names scale style)
-  (format-wish "set ~a [::Plotchart::createRadialchart {~{ ~a~} } ~f ~a]" 
+  (format-wish "set ~a [::Plotchart::createRadialchart ~a {~{ ~a~} } ~f ~a]" 
                (name chart) 
                (widget-path (canvas chart))
                names 
@@ -782,6 +785,10 @@
   "Passes to 'colour' variant"
   (apply #'colours chart colours))
 
+(defgeneric color-map (chart colours))
+(defmethod color-map ((chart xy-plot) colours)
+  (colour-map chart colours))
+
 (defgeneric colour (chart fill border))
 (defmethod colour ((chart threed-plot) fill border)
   "Sets the fill and border colour"
@@ -811,6 +818,11 @@
                   (mapcar #'(lambda (c) (string-downcase (string c))) colours)))
     (otherwise
       (error "Unknown type ~a passed to colours" (type-of chart)))))
+
+(defgeneric colour-map (chart colours))
+(defmethod colour-map ((chart xy-plot) colours)
+  "Sets the colours to use with the contour map methods"
+  (format-wish "$~a colormap ~a" (name chart) (item2string colours)))
 
 (defun config (chart &key show-values value-font value-colour value-format
                      use-background use-ticklines
@@ -901,6 +913,34 @@
   (format-wish "$~a plot circle ~f ~f ~f ~a" (name chart) xc yc radius 
                (if colour (string-downcase (string colour)) "")))
 
+(defgeneric draw-contour-box (chart xcrds ycrds values &optional classes))
+(defmethod draw-contour-box ((chart xy-plot) xcrds ycrds values &optional classes)
+  "Draws cells as filled rectangles for the given values on the grid"
+  (format-wish "$~a contourbox ~a ~a ~a ~a"
+               (name chart) (item2string xcrds) (item2string ycrds) 
+               (item2string values) (item2string classes)))
+
+(defgeneric draw-contour-fill (chart xcrds ycrds values &optional classes))
+(defmethod draw-contour-fill ((chart xy-plot) xcrds ycrds values &optional classes)
+  "Draws filled contours for the given values on the grid"
+  (format-wish "$~a contourfill ~a ~a ~a ~a"
+               (name chart) (item2string xcrds) (item2string ycrds) 
+               (item2string values) (item2string classes)))
+
+(defgeneric draw-contour-lines (chart xcrds ycrds values &optional classes))
+(defmethod draw-contour-lines ((chart xy-plot) xcrds ycrds values &optional classes)
+  "Draws contour lines for the given values on the grid"
+  (format-wish "$~a contourlines ~a ~a ~a ~a"
+               (name chart) (item2string xcrds) (item2string ycrds) 
+               (item2string values) (item2string classes)))
+
+(defgeneric draw-contour-lines-function-values (chart xvec yvec valuesmat &optional classes))
+(defmethod draw-contour-lines-function-values ((chart xy-plot) xvec yvec valuesmat &optional classes)
+  "Draws contour lines for the given values on the grid"
+  (format-wish "$~a contourlinesfunctionvalues ~a ~a ~a ~a"
+               (name chart) (item2string xvec) (item2string yvec) 
+               (item2string valuesmat) (item2string classes)))
+
 (defgeneric draw-dot (chart series xcrd ycrd value))
 (defmethod draw-dot ((chart xy-plot) series xcrd ycrd value)
   "Draws a dot in the given plot"
@@ -929,6 +969,11 @@
   "Draw and fill specified rectangle on an isometric-plot"
   (format-wish "$~a plot filled-rectangle ~f ~f ~f ~f ~a" (name chart) x1 y1 x2 y2 
                (if colour (string-downcase (string colour)) "")))
+
+(defgeneric draw-grid (chart xcrds ycrds))
+(defmethod draw-grid ((chart xy-plot) xcrds ycrds)
+  "Draws the grid cells as lines connecting the given coordinates"
+  (format-wish "$~a grid ~a ~a" (name chart) (item2string xcrds) (item2string ycrds)))
 
 (defgeneric draw-label-dot (chart x y text &optional orientation))
 (defmethod draw-label-dot ((chart xy-plot) x y text &optional orientation)
@@ -1047,6 +1092,16 @@
       (setf option-string (format nil "~a -spacing ~a" option-string (get-param spacing))))
     (format-wish "$~a legendconfig ~a" (name chart) option-string)))
 
+(defgeneric legend-shades (chart values classes))
+(defmethod legend-shades ((chart xy-plot) values classes)
+  "Adds contour classes to the legend as coloured rectangles"
+  (format-wish "$~s legendshades ~a ~a" (name chart) (item2string values) (item2string classes)))
+
+(defgeneric legend-isometric-lines (chart values classes))
+(defmethod legend-isometric-lines ((chart xy-plot) values classes)
+  "Adds contour classes to the legend as coloured lines"
+  (format-wish "$~s legendisolines ~a ~a" (name chart) (item2string values) (item2string classes)))
+
 (defun milestone (chart text time &optional colour)
   "Adds a milestone to a chart"
   (typecase chart
@@ -1154,7 +1209,7 @@
 
     (threed-bar-chart
       (if (= 3 (length args))
-        (format-wish "$~a plot ~a ~f ~a" 
+        (format-wish "$~a plot ~a ~a ~a" 
                      (name chart) 
                      (first args)
                      (second args)
@@ -1205,6 +1260,14 @@
                ylist
                (if every every "")))
 
+(defgeneric plot-pack (canvas direction &rest charts))
+(defmethod plot-pack ((canvas canvas) direction &rest charts)
+  "Copies contents of charts onto given canvas"
+  (format-wish "::Plotchart::plotpack ~a ~a ~{ $~a~}"
+               (widget-path canvas)
+               (get-param direction "direction" '("top" "left" "bottom" "right"))
+               (mapcar #'name charts)))
+
 (defgeneric rchart (chart series xcoord ycoord))
 (defmethod rchart ((chart xy-plot) series xcoord ycoord)
   "Like plot, but adds +/- s.d. line"
@@ -1254,8 +1317,8 @@
   "Sets the chart subtitle"
   (format-wish "$~a subtitle \"~a\"" (name chart) title))
 
-(defgeneric summary (chart text args))
-(defmethod summary ((chart gantt-chart) text args)
+(defgeneric summary (chart text &rest args))
+(defmethod summary ((chart gantt-chart) text &rest args)
   (format-wish "$~a summary \"~a\" {~{ ~a~} }" 
                (name chart) text args))
 
@@ -1404,17 +1467,19 @@
 
 (defun item2string (item)
   "Converts an item, list, string, number, to a tcl string"
-  (typecase item
-    (list
-      (format nil "{~{ ~a~} }" item))
-    (string
-      (format nil "\"~a\"" item))
-    (float
-      (format nil "~f" item))
-    (number
-      (format nil "~d" item))
-    (otherwise
-      (error "item2string does not recognise type of item ~a" item))))
+  (if (null item)
+    ""
+    (typecase item
+      (list
+        (format nil "{~{ ~a~} }" (mapcar #'item2string item)))
+      (string
+        (format nil "\"~a\"" item))
+      (float
+        (format nil "~f" item))
+      (number
+        (format nil "~d" item))
+      (otherwise
+        (error "item2string does not recognise type of item ~a" item)))))
 
 (defun make-config-args (colour color type symbol radius width filled
                                 fillcolour style &optional smooth
@@ -1494,17 +1559,4 @@
            (stringp (second axis))
            (numberp (third axis)))
       (error "Given axis ~a is not a valid time axis for ~a" axis name)))
-
-;; ---------------------------------------------------------------------------
-;; TODO
-
-;; $xyplot contourlines xcrd ycrd values ?classes?
-;; $xyplot contourlinesfunctionvalues xvec yvec valuesmat ?classes?
-;; $xyplot contourfill xcrd ycrd values ?classes?
-;; $xyplot contourbox xcrd ycrd values ?classes?
-;; $xyplot colorMap colours
-;; $xyplot legendisolines values classes
-;; $xyplot legendshades values classes
-;; $xyplot grid xcrd ycrd
-
 
