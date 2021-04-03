@@ -1,127 +1,131 @@
 (defpackage :ltk-plotchart
   (:use :cl :ltk)
+  (:nicknames :chart)
   (:export
+    ; classes 
     :bar-chart
-    :bar-chart-config
-    :bar-chart-plot
     :box-plot
-    :box-plot-plot
-    :chart-background
-    :chart-balloon
-    :chart-balloonconfig
-    :chart-legend
-    :chart-legendconfig
-    :chart-plaintext
-    :chart-plaintextconfig
-    :chart-removefromlegend
-    :chart-saveplot
-    :chart-subtitle
-    :chart-title
-    :chart-xsubtext
-    :chart-xtext
-    :chart-xticklines
-    :chart-vsubtext
-    :chart-vtext
-    :chart-ysubtext
-    :chart-ytext
-    :chart-yticklines
     :gantt-chart
-    :gantt-chart-color
-    :gantt-chart-colour
-    :gantt-chart-connect
-    :gantt-chart-font
-    :gantt-chart-hscroll
-    :gantt-chart-milestone
-    :gantt-chart-summary
-    :gantt-chart-task
-    :gantt-chart-vertline
-    :gantt-chart-vscroll
     :histogram
-    :histogram-dataconfig
-    :histogram-plot
-    :histogram-plotcumulative
     :horizontal-bar-chart
-    :horizontal-bar-chart-config
-    :horizontal-bar-chart-plot
     :isometric-plot
-    :isometric-plot-circle
-    :isometric-plot-filled-circle
-    :isometric-plot-filled-rectangle
-    :isometric-plot-rectangle
-    :logx-y-minmax
-    :logx-y-plot
-    :logx-logy-minmax
     :logx-logy-plot
+    :logx-y-plot
     :pie-chart
-    :pie-chart-colors
-    :pie-chart-colours
-    :pie-chart-explode
-    :pie-chart-plot
     :polar-plot
-    :polar-plot-dataconfig
-    :polar-plot-plot
     :radial-chart
-    :radial-chart-colors
-    :radial-chart-colours
-    :radial-chart-plot
     :right-axis
-    :right-axis-dataconfig
-    :right-axis-plot
     :spiral-pie
     :status-timeline
-    :status-timeline-plot
-    :status-timeline-vertline
     :strip-chart
-    :strip-chart-dataconfig
-    :strip-chart-plot
     :table-chart
-    :table-chart-cellconfigure
-    :table-chart-row
-    :table-chart-separator
     :ternary-diagram
-    :ternary-diagram-dataconfig
-    :ternary-diagram-line
-    :ternary-diagram-plot
-    :ternary-diagram-text
-    :ternary-diagram-ticklines
     :threed-bar-chart
-    :threed-bar-chart-config
-    :threed-bar-chart-plot
     :threed-plot
-    :threed-plot-color
-    :threed-plot-colour
-    :threed-plot-gridsize
-    :threed-plot-interpolatedata
-    :threed-plot-plotdata
-    :threed-plot-ribbon
     :threed-ribbon-chart
-    :threed-ribbon-chart-area
-    :threed-ribbon-chart-line
     :threed-ribbon-plot
-    :threed-ribbon-plot-color
-    :threed-ribbon-plot-colour
-    :threed-ribbon-plot-plot
     :time-chart
-    :time-chart-addperiod
-    :time-chart-hscroll
-    :time-chart-milestone
-    :time-chart-period
-    :time-chart-vertline
-    :time-chart-vscroll
     :tx-plot
-    :tx-plot-dataconfig
-    :tx-plot-plot
     :windrose
-    :windrose-plot
-    :x-logy-minmax
-    :x-logy-plot
     :xy-plot
-    :xy-plot-dataconfig
-    :xy-plot-interval
-    :xy-plot-minmax
-    :xy-plot-plot
-    :xy-plot-plotlist
-    :xy-plot-rchart
-    :xy-plot-region
-    :xy-plot-trend
+    :x-logy-plot
+    ; create-X functions
+    :create-bar-chart
+    :create-box-plot
+    :create-gantt-chart
+    :create-histogram
+    :create-horizontal-bar-chart
+    :create-isometric-plot
+    :create-logx-logy-plot
+    :create-logx-y-plot
+    :create-pie-chart
+    :create-polar-plot
+    :create-radial-chart
+    :create-right-axis
+    :create-spiral-pie
+    :create-status-timeline
+    :create-strip-chart
+    :create-3d-bar-chart
+    :create-3d-plot
+    :create-3d-ribbon-chart
+    :create-3d-ribbon-plot
+    :create-table-chart
+    :create-ternary-diagram
+    :create-time-chart
+    :create-tx-plot
+    :create-windrose
+    :create-xy-plot
+    :create-x-logy-plot
+    ; remaining functions
+    :add-milestone
+    :add-period
+    :area
+    :background
+    :balloon
+    :balloon-config
+    :box-and-whiskers
+    :cell-configure
+    :color 
+    :colors
+    :colour
+    :colours
+    :config
+    :connect
+    :corner-text
+    :data-config
+    :dot-config
+    :draw-circle
+    :draw-dot
+    :draw-filled-circle
+    :draw-filled-polygon
+    :draw-filled-rectangle
+    :draw-label-dot
+    :draw-line
+    :draw-rectangle
+    :draw-vector
+    :draw-x-band
+    :draw-y-band
+    :explode
+    :font
+    :gridsize
+    :horizontal-scrollbar
+    :interpolate-data
+    :interval
+    :legend
+    :legend-config
+    :milestone
+    :minmax
+    :period
+    :plaintext
+    :plaintext-config
+    :plot
+    :plot-cumulative
+    :plot-data
+    :plot-list
+    :rchart
+    :region
+    :remove-from-legend
+    :ribbon
+    :row
+    :save-plot
+    :separator
+    :subtitle
+    :summary
+    :task
+    :ticklines
+    :title-text
+    :trend
+    :v-subtext
+    :v-text
+    :vector-config
+    :vertical-scrollbar
+    :vertical-line
+    :x-config
+    :x-subtext
+    :x-text
+    :x-ticklines
+    :y-config
+    :y-subtext
+    :y-text
+    :y-ticklines
     ))
