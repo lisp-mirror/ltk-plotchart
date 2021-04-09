@@ -63,7 +63,6 @@
     :background
     :balloon
     :balloon-config
-    :box-and-whiskers
     :cell-configure
     :color 
     :colors
@@ -76,6 +75,7 @@
     :corner-text
     :data-config
     :dot-config
+    :draw-box-and-whiskers
     :draw-circle
     :draw-contour-lines
     :draw-contour-lines-function-values
@@ -84,9 +84,13 @@
     :draw-filled-polygon
     :draw-filled-rectangle
     :draw-grid
+    :draw-interval
     :draw-label-dot
     :draw-line
+    :draw-minmax
     :draw-rectangle
+    :draw-region
+    :draw-trendline
     :draw-vector
     :draw-x-band
     :draw-y-band
@@ -95,13 +99,12 @@
     :gridsize
     :horizontal-scrollbar
     :interpolate-data
-    :interval
     :legend
     :legend-config
     :legend-isometric-lines
+    :legend-remove
     :legend-shades
     :milestone
-    :minmax
     :period
     :plaintext
     :plaintext-config
@@ -111,8 +114,6 @@
     :plot-list
     :plot-pack
     :rchart
-    :region
-    :remove-from-legend
     :ribbon
     :row
     :save-plot
@@ -122,7 +123,6 @@
     :task
     :ticklines
     :title-text
-    :trend
     :v-subtext
     :v-text
     :vector-config

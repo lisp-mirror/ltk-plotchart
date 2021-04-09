@@ -23,8 +23,7 @@
           (let ((c (make-instance 'canvas :background :white :width 400 :height 200))
                 (c2 (make-instance 'canvas :background :white :width 400 :height 200)))
 
-            (pack c :fill :both :side :top)
-            (pack c2 :fill :both :side :top)
+            (pack (list c c2) :fill :both :side :top)
 
             ;; -- set up a strip chart
             (let ((s (chart:create-strip-chart c '(0.0 100.0 10.0) '(0.0 100.0 20.0))))
@@ -71,8 +70,7 @@
                                    :background :white :width 400 :height 200))
                  (c2 (make-instance 'canvas :master window
                                     :background :white :width 400 :height 200)))
-            (pack c :fill :both)
-            (pack c2 :fill :both)
+            (pack (list c c2) :fill :both)
 
             (let ((s (chart:create-xy-plot c '(0.0 100.0 10.0) '(0.0 100.0 20.0))))
               (chart:background s :gradient :green :top-down)

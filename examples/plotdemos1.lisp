@@ -11,10 +11,7 @@
                 (c2 (make-instance 'canvas :background :white :width 400 :height 200))
                 (c3 (make-instance 'canvas :background :white :width 400 :height 200))
                 (c4 (make-instance 'canvas :background :white :width 400 :height 200)))
-            (pack c :fill :both :side :top)
-            (pack c2 :fill :both :side :top)
-            (pack c3 :fill :both :side :top)
-            (pack c4 :fill :both :side :top)
+            (pack (list c c2 c3 c4) :fill :both :side :top)
 
             ;; -- set up part 1
             (let ((s (chart:create-xy-plot c '(0.0 100.0 10.0) '(0.0 100.0 20.0)))
@@ -34,12 +31,12 @@
                         (ynew2 (+ yold (* (- (random 1.0) 0.5) 2.0 yd))))
                     (chart:plot s "series1" xnew ynew)
                     (chart:plot s "series2" xnew ynew2)
-                    (chart:trend s "series3" xnew ynew)
+                    (chart:draw-trendline s "series3" xnew ynew)
                     (setf xold xnew
                           yold ynew))))
 
-              (chart:interval s "series2" 50.0 40.0 60.0 52.0)
-              (chart:interval s "series2" 60.0 40.0 60.0)
+              (chart:draw-interval s "series2" 50.0 40.0 60.0 52.0)
+              (chart:draw-interval s "series2" 60.0 40.0 60.0)
 
               (chart:x-text s "X-coordinate")
               (chart:y-text s "Y-data")
@@ -98,8 +95,7 @@
                  (c2 (make-instance 'canvas :master toplevel-h :background :white :width 400 :height 200)))
             (wm-title toplevel-h "plotdemos1.lisp - h")
 
-            (pack c :fill :both :side :top)
-            (pack c2 :fill :both :side :top)
+            (pack (list c c2) :fill :both :side :top)
 
             (let ((s (chart:create-bar-chart c '(A B C D E) '(0.0 10.0 2.0) 2.5)))
               (chart:plot s "series1" '(1.0 4.0 6.0 1.0 7.0) :red)
@@ -125,9 +121,7 @@
                  (c3 (make-instance 'canvas :master toplevel-v :background :white :width 400 :height 200)))
             (wm-title toplevel-v "plotdemos1.lisp - v")
 
-            (pack c :fill :both :side :top)
-            (pack c2 :fill :both :side :top)
-            (pack c3 :fill :both :side :top)
+            (pack (list c c2 c3) :fill :both :side :top)
 
             (let ((s (chart:create-horizontal-bar-chart c 
                                     '(0.0 10.0 2.0)
@@ -166,9 +160,7 @@
                  (c3 (make-instance 'canvas :master toplevel-h3 :background :white :width 400 :height 250)))
             (wm-title toplevel-h3 "plotdemos1.lisp - h3")
 
-            (pack c :fill :both :side :top)
-            (pack c2 :fill :both :side :top)
-            (pack c3 :fill :both :side :top)
+            (pack (list c c2 c3) :fill :both :side :top)
 
             ;; cowboy hat - in TclTk this is provided as a function, but that is not supported
             (labels ((square (n) (* n n))

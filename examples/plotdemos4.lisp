@@ -19,13 +19,10 @@
                  (canvas4 (make-instance 'canvas
                                          :master window2
                                          :width 300 :height 200 :background :white)))
-            (pack canvas :fill :both)
-            (pack canvas2 :fill :both)
-            (pack canvas3 :fill :both)
-            (pack canvas4 :fill :both)
+            (pack (list canvas canvas2 canvas3 canvas4) :fill :both)
 
             ; 3D barchart
-            (let ((chart (chart:create-3d-bar-chart canvas '(-200.0 900.0 100.0) 7)))
+            (let ((chart (chart:create-3d-bar-chart canvas '(-200.0 900.0 100.0) :num-bars 7)))
               (dolist (pair '(("red" 765) ("green" 234) ("blue" 345) ("yellow" 321)
                                           ("magenta" 567) ("cyan" -123) ("white" 400)))
                 (chart:plot chart (first pair) (second pair) (first pair)))
@@ -39,7 +36,7 @@
               (let ((chart (chart:create-radial-chart (second pair)
                                                       '(A B "LongerName" C D)
                                                       10.0
-                                                      (first pair))))
+                                                      :style (first pair))))
                 (chart:plot chart '(1 2 3 4 3) :green 2)
                 (chart:plot chart '(4 5 0 1 4) :red 3)
                 (chart:title-text chart 

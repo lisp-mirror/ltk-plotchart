@@ -51,24 +51,24 @@
 (defclass bar-chart (plotchart)
   ())
 
-(defmethod initialize-instance :after ((chart bar-chart) &key xlabels yaxis noseries xlabelangle)
+(defmethod initialize-instance :after ((chart bar-chart) &key xlabels yaxis num-series xlabel-angle)
   (when (valid-axis-p yaxis "bar-chart - yaxis")
-    (format-wish "set ~a [::Plotchart::createBarchart ~a {~{ ~a~} } {~{ ~d~} } ~a~a]" 
+    (format-wish "set ~a [::Plotchart::createBarchart ~a ~a ~a ~a~a]" 
                  (name chart) 
                  (widget-path (canvas chart))
-                 xlabels 
-                 yaxis 
-                 (if (numberp noseries) noseries (get-param noseries ))
-                 (if xlabelangle (format nil " -xlabelangle ~d" xlabelangle) ""))))
+                 (tcl-it xlabels)
+                 (tcl-it yaxis)
+                 (tcl-it num-series)
+                 (if xlabel-angle (format nil " -xlabelangle ~d" xlabel-angle) ""))))
 
-(defun create-bar-chart (canvas xlabels yaxis noseries &key xlabelangle)
+(defun create-bar-chart (canvas xlabels yaxis num-series &key xlabel-angle)
   "Creates instance of a bar-chart"
   (make-instance 'bar-chart
                  :canvas canvas
                  :xlabels xlabels
                  :yaxis yaxis
-                 :noseries noseries
-                 :xlabelangle xlabelangle))
+                 :num-series num-series
+                 :xlabel-angle xlabel-angle))
 
 ;; Box Plot
 
@@ -81,9 +81,9 @@
                (widget-path (canvas chart))
                xdata
                ydata 
-               (get-param orientation "orientation" '("horizontal" "vertical"))))
+               (tcl-it-checked orientation '("horizontal" "vertical") "orientation")))
 
-(defun create-box-plot (canvas xdata ydata &optional (orientation :horizontal))
+(defun create-box-plot (canvas xdata ydata &key (orientation :horizontal))
   "Creates an instance of a box-plot"
   (make-instance 'box-plot
                  :canvas canvas
@@ -154,22 +154,22 @@
 (defclass horizontal-bar-chart (plotchart)
   ())
 
-(defmethod initialize-instance :after ((chart horizontal-bar-chart) &key xaxis ylabels noseries)
+(defmethod initialize-instance :after ((chart horizontal-bar-chart) &key xaxis ylabels num-series)
   (when (valid-axis-p xaxis "horizontal-bar-chart - xaxis")
     (format-wish "set ~a [::Plotchart::createHorizontalBarchart ~a {~{ ~d~} } {~{ ~a~} } ~a]" 
                  (name chart) 
                  (widget-path (canvas chart))
                  xaxis 
                  ylabels 
-                 (if (numberp noseries) noseries (get-param noseries)))))
+                 (tcl-it num-series))))
 
-(defun create-horizontal-bar-chart (canvas xaxis ylabels noseries)
+(defun create-horizontal-bar-chart (canvas xaxis ylabels num-series)
   "Creates instance of a horizontal-bar-chart"
   (make-instance 'horizontal-bar-chart
                  :canvas canvas
                  :xaxis xaxis
                  :ylabels ylabels
-                 :noseries noseries))
+                 :num-series num-series))
 
 ;; Isometric Plot
 
@@ -184,9 +184,7 @@
                  (widget-path (canvas chart))
                  xaxis 
                  yaxis
-                 (if (numberp stepsize)
-                   (format nil "~f" stepsize)
-                   (get-param stepsize)))))
+                 (tcl-it stepsize))))
 
 (defun create-isometric-plot (canvas xaxis yaxis stepsize)
   "Creates instance of an isometric-plot"
@@ -201,6 +199,20 @@
 
 (defclass logx-logy-plot (xy-plot)
   ())
+
+(defmethod initialize-instance :after ((chart logx-logy-plot) &key 
+                                                              xaxis yaxis
+                                                              xlabels ylabels box
+                                                              axesbox timeformat gmt
+                                                              axestozero isometric)
+  (when (and (valid-axis-p xaxis "logx-logy-plot - xaxis")
+             (valid-axis-p yaxis "logx-logy-plot - yaxis"))
+    (format-wish "set ~a [::Plotchart::createLogXLogYPlot ~a {~{ ~d~} } {~{ ~d~} }~a]" 
+                 (name chart) 
+                 (widget-path (canvas chart))
+                 xaxis 
+                 yaxis 
+                 (make-xy-args xlabels ylabels box axesbox timeformat gmt axestozero isometric))))
 
 (defun create-logx-logy-plot (canvas xaxis yaxis &key xlabels ylabels box
                                      axesbox timeformat gmt
@@ -224,6 +236,20 @@
 
 (defclass logx-y-plot (xy-plot)
   ())
+
+(defmethod initialize-instance :after ((chart logx-y-plot) &key 
+                                                           xaxis yaxis
+                                                           xlabels ylabels box
+                                                           axesbox timeformat gmt
+                                                           axestozero isometric)
+  (when (and (valid-axis-p xaxis "logx-y-plot - xaxis")
+             (valid-axis-p yaxis "logx-y-plot - yaxis"))
+    (format-wish "set ~a [::Plotchart::createLogXYPlot ~a {~{ ~d~} } {~{ ~d~} }~a]" 
+                 (name chart) 
+                 (widget-path (canvas chart))
+                 xaxis 
+                 yaxis 
+                 (make-xy-args xlabels ylabels box axesbox timeformat gmt axestozero isometric))))
 
 (defun create-logx-y-plot (canvas xaxis yaxis &key xlabels ylabels box
                                   axesbox timeformat gmt
@@ -296,9 +322,9 @@
                (widget-path (canvas chart))
                names 
                scale 
-               (get-param style "radial-chart - style" '("lines" "cumulative" "filled"))))
+               (tcl-it-checked style '("lines" "cumulative" "filled") "radial-chart - style")))
 
-(defun create-radial-chart (canvas names scale &optional (style "lines"))
+(defun create-radial-chart (canvas names scale &key (style "lines"))
   "Creates an instance of a radial-chart"
   (make-instance 'radial-chart
                  :canvas canvas
@@ -324,8 +350,11 @@
 
 ;; Spiral Pie 
 
-(defclass spiral-pie (pie-chart) 
+(defclass spiral-pie (plotchart) 
   ())
+
+(defmethod initialize-instance :after ((chart spiral-pie) &key)
+  (format-wish "set ~a [::Plotchart::createSpiralPie ~a]" (name chart) (widget-path (canvas chart))))
 
 (defun create-spiral-pie (canvas)
   "Creates an instance of a spiral-pie"
@@ -413,7 +442,7 @@
                    widths) ; or constant width for all columns
                  "")))
 
-(defun create-table-chart (canvas columns &optional widths)
+(defun create-table-chart (canvas columns &key widths)
   "Creates an instance of a table-chart"
   (make-instance 'table-chart
                  :canvas canvas
@@ -455,22 +484,22 @@
 
 (defclass threed-bar-chart (plotchart)
   ((yaxis :accessor yaxis :initarg :yaxis :initform '(0 10 1))
-   (nobars :accessor nobars :initarg :nbars :initform 1)))
+   (num-bars :accessor num-bars :initarg :num-bars :initform 1)))
 
-(defmethod initialize-instance :after ((chart threed-bar-chart) &key yaxis (nobars 1))
+(defmethod initialize-instance :after ((chart threed-bar-chart) &key yaxis (num-bars 1))
   (when (valid-axis-p yaxis "threed-bar-chart - yaxis")
     (format-wish "set ~a [::Plotchart::create3DBarchart ~a {~{ ~d~} } ~d]" 
                  (name chart) 
                  (widget-path (canvas chart))
                  yaxis 
-                 nobars)))
+                 num-bars)))
 
-(defun create-3d-bar-chart (canvas yaxis &optional (nobars 1))
+(defun create-3d-bar-chart (canvas yaxis &key (num-bars 1))
   "Creates an instance of a threed-bar-chart"
   (make-instance 'threed-bar-chart
                  :canvas canvas
                  :yaxis yaxis
-                 :nobars nobars))
+                 :num-bars num-bars))
 
 ;; 3D Plot
 
@@ -501,12 +530,9 @@
 ;; 3D Ribbon Chart
 
 (defclass threed-ribbon-chart (plotchart)
-  ((names :accessor names :initarg :names :initform nil)
-   (yaxis :accessor yaxis :initarg :yaxis :initform '(0 10 1))
-   (zaxis :accessor zaxis :initarg :zaxis :initform '(0 10 1))
-   (nobars :accessor nobars :initarg :nbars :initform 1)))
+  ())
 
-(defmethod initialize-instance :after ((chart threed-ribbon-chart) &key names yaxis zaxis (nobars 1))
+(defmethod initialize-instance :after ((chart threed-ribbon-chart) &key names yaxis zaxis (num-bars 1))
   (when (and (valid-axis-p yaxis "threed-ribbon-chart - yaxis")
              (valid-axis-p zaxis "threed-ribbon-chart - zaxis"))
     (format-wish "set ~a [::Plotchart::create3DRibbonChart ~a {~{ ~a~} } {~{ ~d~} } {~{ ~d~} } ~d]" 
@@ -515,16 +541,16 @@
                  names 
                  yaxis 
                  zaxis
-                 nobars)))
+                 num-bars)))
 
-(defun create-3d-ribbon-chart (canvas names yaxis zaxis &optional (nobars 1))
+(defun create-3d-ribbon-chart (canvas names yaxis zaxis &key (num-bars 1))
   "Creates an instance of a threed-ribbon-chart"
   (make-instance 'threed-ribbon-chart
                  :canvas canvas
                  :names names
                  :yaxis yaxis
                  :zaxis zaxis
-                 :nobars nobars))
+                 :num-bars num-bars))
 
 ;; 3D Ribbon Plot
 
@@ -577,7 +603,7 @@
   ())
 
 (defmethod initialize-instance :after ((chart tx-plot) &key timeaxis xaxis
-                                                       xlabels ylabels box
+                                                       box
                                                        axesbox timeformat gmt
                                                        axestozero isometric)
   (when (and (valid-time-axis-p timeaxis "tx-plot - timeaxis")
@@ -587,18 +613,16 @@
                  (widget-path (canvas chart))
                  timeaxis 
                  xaxis 
-                 (make-xy-args xlabels ylabels box axesbox timeformat gmt axestozero isometric))))
+                 (make-xy-args nil nil box axesbox timeformat gmt axestozero isometric))))
 
-(defun create-tx-plot (canvas timeaxis xaxis &key xlabels ylabels box
-                                                       axesbox timeformat gmt
-                                                       axestozero isometric)
+(defun create-tx-plot (canvas timeaxis xaxis &key box
+                              axesbox timeformat gmt
+                              axestozero isometric)
   "Creates instance of a tx-plot"
   (make-instance 'tx-plot
                  :canvas canvas
                  :timeaxis timeaxis
                  :xaxis xaxis
-                 :xlabels xlabels
-                 :ylabels ylabels
                  :box box
                  :axesbox axesbox
                  :timeformat timeformat
@@ -611,26 +635,57 @@
 (defclass windrose (plotchart)
   ())
 
-(defmethod initialize-instance :after ((chart windrose) &key radius-data (sectors 16))
+(defmethod initialize-instance :after ((chart windrose) &key radius-data (num-sectors 16))
   (when (valid-radius-data-p radius-data "windrose - radius-data")
-    (format-wish "set ~a [::Plotchart::createWindrose ~a {~{ ~d~} } ~a]" 
+    (format-wish "set ~a [::Plotchart::createWindRose ~a {~{ ~d~} } ~a]" 
                  (name chart) 
                  (widget-path (canvas chart))
                  radius-data 
-                 sectors)))
+                 num-sectors)))
 
-(defun create-windrose (canvas radius-data &optional (sectors 16))
+(defun create-windrose (canvas radius-data &key (num-sectors 16))
   "Creates an instance of a windrose"
   (make-instance 'windrose
                  :canvas canvas
                  :radius-data radius-data
-                 :sectors sectors))
+                 :num-sectors num-sectors))
 
 ;; X-LogY Plot
 ;; - XY Plot with y axis having logarithmic values
 
 (defclass x-logy-plot (xy-plot)
   ())
+
+(defmethod initialize-instance :after ((chart x-logy-plot) &key 
+                                                           xaxis yaxis
+                                                           xlabels ylabels box
+                                                           axesbox timeformat gmt
+                                                           axestozero isometric)
+  (when (and (valid-axis-p xaxis "x-logy-plot - xaxis")
+             (valid-axis-p yaxis "x-logy-plot - yaxis"))
+    (format-wish "set ~a [::Plotchart::createXLogYPlot ~a {~{ ~d~} } {~{ ~d~} }~a]" 
+                 (name chart) 
+                 (widget-path (canvas chart))
+                 xaxis 
+                 yaxis 
+                 (make-xy-args xlabels ylabels box axesbox timeformat gmt axestozero isometric))))
+
+(defun create-x-logy-plot (canvas xaxis yaxis &key xlabels ylabels box
+                                  axesbox timeformat gmt
+                                  axestozero isometric)
+  "Creates instance of an xy-plot"
+  (make-instance 'x-logy-plot
+                 :canvas canvas
+                 :xaxis xaxis
+                 :yaxis yaxis
+                 :xlabels xlabels
+                 :ylabels ylabels
+                 :box box
+                 :axesbox axesbox
+                 :timeformat timeformat
+                 :gmt gmt
+                 :axestozero axestozero
+                 :isometric isometric))
 
 ;; XY Plot
 
@@ -651,8 +706,8 @@
                  (make-xy-args xlabels ylabels box axesbox timeformat gmt axestozero isometric))))
 
 (defun create-xy-plot (canvas xaxis yaxis &key xlabels ylabels box
-                                                       axesbox timeformat gmt
-                                                       axestozero isometric)
+                              axesbox timeformat gmt
+                              axestozero isometric)
   "Creates instance of an xy-plot"
   (make-instance 'xy-plot
                  :canvas canvas
@@ -674,14 +729,14 @@
 (defmethod add-milestone ((chart time-chart) time-point &optional colour)
   "Adds another milestone to the current row of a chart"
   (format-wish "$~a addmilestone \"~a\" ~a" 
-               (name chart) time-point (get-param colour)))
+               (name chart) time-point (tcl-it colour)))
 
 (defgeneric add-period (chart time-begin time-end &optional colour))
 (defmethod add-period ((chart time-chart) time-begin time-end &optional colour)
   "Adds a new time period to the current row of a chart"
   (format-wish "$~a addperiod \"~a\" \"~a\" ~a" 
                (name chart) time-begin time-end
-               (get-param colour)))
+               (tcl-it colour)))
 
 (defgeneric area (chart xypairs colour))
 (defmethod area ((chart threed-ribbon-chart) xypairs colour)
@@ -690,90 +745,59 @@
                (name chart)
                (apply #'uiop:strcat 
                       (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&" row)) xypairs))
-               (get-param colour)))
+               (tcl-it colour)))
 
 (defgeneric background (chart part colour-or-image &optional direction brightness))
 (defmethod background ((chart plotchart) part colour-or-image &optional direction (brightness :bright))
   "Sets the background of a part of the plot"
   (format-wish "$~a background \"~a\" \"~a\" \"~a\" \"~a\""
                (name chart) 
-               (get-param part)
+               (tcl-it part)
                (if (eql :image part)
                  (widget-path colour-or-image)
-                 (get-param colour-or-image))
-               (get-param direction)
-               (get-param brightness)))
+                 (tcl-it colour-or-image))
+               (tcl-it direction)
+               (tcl-it brightness)))
 
 (defgeneric balloon (chart x y text direction))
 (defmethod balloon ((chart plotchart) x y text direction)
   "Adds balloon text to the plot, with pointer to given coordinates"
   (format-wish "$~a balloon ~f ~f \"~a\" \"~a\"" 
                (name chart) x y text 
-               (get-param direction "direction" 
-                          '("north" "north-east" "east" "south-east" "south"
-                            "south-west" "west" "north-west"))))
+               (tcl-it-checked direction 
+                               '("north" "north-east" "east" "south-east" "south"
+                                 "south-west" "west" "north-west")
+                               "direction")))
 
 (defgeneric balloon-config (chart &key font justify textcolour textcolor 
-                                       background outline margin rimwidth arrowsize))
+                                  background outline margin rimwidth arrowsize))
 (defmethod balloon-config ((chart plotchart) &key font justify textcolour 
                                              textcolor background outline margin 
                                              rimwidth arrowsize)
   "Configures balloon text for given plot - settings apply to next call to chart-balloon"
-  (let ((option-string ""))
-    (when font
-      (setf option-string (format nil "~a -font \"~a\"" option-string font)))
-    (when justify
-      (setf option-string (format nil "~a -justify ~a"
-                                  option-string
-                                  (get-param justify "justify" '("left" "center" "right")))))
-    (when textcolour
-      (setf option-string (format nil "~a -textcolour ~a"
-                                  option-string
-                                  (get-param textcolour))))
-    (when textcolor
-      (setf option-string (format nil "~a -textcolour ~a"
-                                  option-string
-                                  (get-param textcolor))))
-    (when background
-      (setf option-string (format nil "~a -background ~a"
-                                  option-string
-                                  (get-param background))))
-    (when outline
-      (setf option-string (format nil "~a -outline ~a"
-                                  option-string
-                                  (get-param outline))))
-    (when margin
-      (setf option-string (format nil "~a -margin ~d" option-string margin)))
-    (when rimwidth
-      (setf option-string (format nil "~a -rimwidth ~d" option-string rimwidth)))
-    (when arrowsize
-      (setf option-string (format nil "~a -arrowsize ~d" option-string arrowsize)))
-    (format-wish "$~a balloonconfig ~a" (name chart) option-string)))
-
-(defgeneric box-and-whiskers (chart series xcrd ycrd))
-(defmethod box-and-whiskers ((chart xy-plot) series xcrd ycrd)
-  "Draw a box and whiskers in the plot."
-  (if (and (listp xcrd) (listp ycrd))
-    (error "box-and-whiskers: only one of xcrd/ycrd can be a list")
-    (format-wish "$~a box-and-whiskers ~a ~a ~a"
-                 (name chart) series (item2string xcrd) (item2string ycrd))))
+  (format-wish "$~a balloonconfig ~a" 
+               (name chart)
+               (make-args (list (list "-font" font)
+                                (list "-justify" 
+                                      (tcl-it-checked justify 
+                                                      '("left" "center" "right") 
+                                                      "justify"))
+                                (list "-textcolour" (or textcolour textcolor))
+                                (list "-background" background)
+                                (list "-outline" outline)
+                                (list "-margin" margin)
+                                (list "-rimwidth" rimwidth)
+                                (list "-arrowsize" arrowsize)))))
 
 (defgeneric cell-configure (chart &key background cell font anchor justify))
 (defmethod cell-configure ((chart table-chart) &key background cell font anchor justify)
   (format-wish "$~a cellconfigure ~a"
                (name chart)
-               (let ((result ""))
-                 (when background
-                   (setf result (format nil "~a -background ~a" result (string-downcase (string background)))))
-                 (when cell
-                   (setf result (format nil "~a -cell ~a" result (string-downcase (string cell)))))
-                 (when font
-                   (setf result (format nil "~a -font \"~a\"" result (string-downcase (string font)))))
-                 (when anchor
-                   (setf result (format nil "~a -anchor ~a" result (string-downcase (string result)))))
-                 (when justify
-                   (setf result (format nil "~a -justify ~a" result (string-downcase (string justify)))))
-                 result)))
+               (make-args (list (list "-background" background)
+                                (list "-cell" cell)
+                                (list "-font" font)
+                                (list "-anchor" anchor)
+                                (list "-justify" justify)))))
 
 (defgeneric color (chart item border))
 (defmethod color (chart item border)
@@ -793,26 +817,27 @@
 (defmethod colour ((chart threed-plot) fill border)
   "Sets the fill and border colour"
   (format-wish "$~a colour ~a ~a" 
-               (name chart) (get-param fill) (get-param border)))
+               (name chart) (tcl-it fill) (tcl-it border)))
 
 (defmethod colour ((chart threed-ribbon-plot) fill border)
   "Sets the fill and border colour"
   (format-wish "$~a colour ~a ~a" 
                (name chart) 
-               (get-param fill)
-               (get-param border)))
+               (tcl-it  fill)
+               (tcl-it  border)))
 
 (defmethod colour ((chart gantt-chart) keyword newcolour)
   (format-wish "$~a colour ~a ~a" 
                (name chart) 
-               (get-param keyword "keyword" 
-                          '("description" "completed" "left" "odd" "even" "summary" "summarybar"))
-               (get-param newcolour)))
+               (tcl-it-checked keyword
+                          '("description" "completed" "left" "odd" "even" "summary" "summarybar")
+                          "keyword")
+               (tcl-it newcolour)))
 
 (defun colours (chart &rest colours)
   "Sets the colours for the pie slices or radial chart spokes"
   (typecase chart
-    ((or pie-chart radial-chart)
+    ((or pie-chart radial-chart spiral-pie)
      (format-wish "$~a colours ~{~a ~}" 
                   (name chart)
                   (mapcar #'(lambda (c) (string-downcase (string c))) colours)))
@@ -822,7 +847,7 @@
 (defgeneric colour-map (chart colours))
 (defmethod colour-map ((chart xy-plot) colours)
   "Sets the colours to use with the contour map methods"
-  (format-wish "$~a colormap ~a" (name chart) (item2string colours)))
+  (format-wish "$~a colormap ~a" (name chart) (tcl-it colours)))
 
 (defun config (chart &key show-values value-font value-colour value-format
                      use-background use-ticklines
@@ -837,7 +862,7 @@
      (when value-font
        (format-wish "$~a config -valuefont \"~a\"" (name chart) value-font))
      (when value-colour
-       (format-wish "$~a config -valuecolour ~a" (name chart) (get-param value-colour)))
+       (format-wish "$~a config -valuecolour ~a" (name chart) (tcl-it value-colour)))
      (when value-format
        (format-wish "$~a config -valueformat \"~a\"" (name chart) value-format)))
 
@@ -849,15 +874,15 @@
       (when value-font
         (format-wish "$~a config -valuefont \"~a\"" (name chart) value-font))
       (when value-colour
-        (format-wish "$~a config -valuecolour ~a" (name chart) (get-param value-colour)))
+        (format-wish "$~a config -valuecolour ~a" (name chart) (tcl-it value-colour)))
       (when use-background
-        (format-wish "$~a config -usebackground ~a" (name chart) use-background))
+        (format-wish "$~a config -usebackground ~a" (name chart) (tcl-it-boolean use-background)))
       (when use-ticklines
-        (format-wish "$~a config -useticklines ~a" (name chart) use-ticklines))
+        (format-wish "$~a config -useticklines ~a" (name chart) (tcl-it-boolean use-ticklines)))
       (when label-font
         (format-wish "$~a config -labelfont \"~a\"" (name chart) label-font))
       (when label-colour
-        (format-wish "$~a config -labelcolour ~a" (name chart) (get-param label-colour))))
+        (format-wish "$~a config -labelcolour ~a" (name chart) (tcl-it label-colour))))
 
     (otherwise
       (error "Unknown chart type ~a passed to config" (type-of chart)))))
@@ -877,7 +902,7 @@
                           boxwidth whiskers whiskerwidth mediancolour medianwidth)
   "Sets the configuration for drawing of data in a given series, for specified chart types"
   (typecase chart
-    ((or histogram polar-plot right-axis strip-chart ternary-diagram tx-plot xy-plot)
+    ((or box-plot histogram polar-plot right-axis strip-chart ternary-diagram tx-plot xy-plot)
      (format-wish "$~a dataconfig ~a ~a"
                   (name chart)
                   series
@@ -886,60 +911,67 @@
     (otherwise
       (error "Unknown chart type ~a passed to data-config" (type-of chart)))))
 
-
 (defgeneric dot-config (chart series &key colour color scale radius scalebyvalue outline classes effect-3d))
 (defmethod dot-config ((chart xy-plot) series &key colour color scale radius scalebyvalue outline classes effect-3d)
   "Configuration options for drawing dots on xy-plots"
   (when colour
-    (format-wish "$~a dotconfig ~a -colour ~a" (name chart) series (get-param colour)))
+    (format-wish "$~a dotconfig ~a -colour ~a" (name chart) series (tcl-it colour)))
   (when color
-    (format-wish "$~a dotconfig ~a -colour ~a" (name chart) series (get-param color)))
+    (format-wish "$~a dotconfig ~a -colour ~a" (name chart) series (tcl-it color)))
   (when scale
-    (format-wish "$~a dotconfig ~a -scale ~f" (name chart) series (get-param scale)))
+    (format-wish "$~a dotconfig ~a -scale ~f" (name chart) series (tcl-it scale)))
   (when radius
-    (format-wish "$~a dotconfig ~a -radius ~f" (name chart) series (get-param radius)))
+    (format-wish "$~a dotconfig ~a -radius ~f" (name chart) series (tcl-it radius)))
   (when scalebyvalue
-    (format-wish "$~a dotconfig ~a -scalebyvalue ~a" (name chart) series (get-param scalebyvalue)))
+    (format-wish "$~a dotconfig ~a -scalebyvalue ~a" (name chart) series (tcl-it scalebyvalue)))
   (when outline
-    (format-wish "$~a dotconfig ~a -outline ~a" (name chart) series (get-param outline)))
+    (format-wish "$~a dotconfig ~a -outline ~a" (name chart) series (tcl-it outline)))
   (when classes
-    (format-wish "$~a dotconfig ~a -classes ~a" (name chart) series (item2string classes)))
+    (format-wish "$~a dotconfig ~a -classes ~a" (name chart) series (tcl-it classes)))
   (when effect-3d
-    (format-wish "$~a dotconfig ~a -3deffect ~a" (name chart) series (get-param effect-3d))))
+    (format-wish "$~a dotconfig ~a -3deffect ~a" (name chart) series (tcl-it effect-3d))))
+
+(defgeneric draw-box-and-whiskers (chart series xcrd ycrd))
+(defmethod draw-box-and-whiskers ((chart xy-plot) series xcrd ycrd)
+  "Draw a box and whiskers in the plot."
+  (if (and (listp xcrd) (listp ycrd))
+    (error "box-and-whiskers: only one of xcrd/ycrd can be a list")
+    (format-wish "$~a box-and-whiskers ~a ~a ~a"
+                 (name chart) series (tcl-it xcrd) (tcl-it ycrd))))
 
 (defgeneric draw-circle (chart xc yc radius &optional colour))
 (defmethod draw-circle ((chart isometric-plot) xc yc radius &optional colour)
   "Draw the outlines of specified circle on isometric-plot"
   (format-wish "$~a plot circle ~f ~f ~f ~a" (name chart) xc yc radius 
-               (if colour (string-downcase (string colour)) "")))
+               (tcl-it colour)))
 
 (defgeneric draw-contour-box (chart xcrds ycrds values &optional classes))
 (defmethod draw-contour-box ((chart xy-plot) xcrds ycrds values &optional classes)
   "Draws cells as filled rectangles for the given values on the grid"
   (format-wish "$~a contourbox ~a ~a ~a ~a"
-               (name chart) (item2string xcrds) (item2string ycrds) 
-               (item2string values) (item2string classes)))
+               (name chart) (tcl-it xcrds) (tcl-it ycrds) 
+               (tcl-it values) (tcl-it classes)))
 
 (defgeneric draw-contour-fill (chart xcrds ycrds values &optional classes))
 (defmethod draw-contour-fill ((chart xy-plot) xcrds ycrds values &optional classes)
   "Draws filled contours for the given values on the grid"
   (format-wish "$~a contourfill ~a ~a ~a ~a"
-               (name chart) (item2string xcrds) (item2string ycrds) 
-               (item2string values) (item2string classes)))
+               (name chart) (tcl-it xcrds) (tcl-it ycrds) 
+               (tcl-it values) (tcl-it classes)))
 
 (defgeneric draw-contour-lines (chart xcrds ycrds values &optional classes))
 (defmethod draw-contour-lines ((chart xy-plot) xcrds ycrds values &optional classes)
   "Draws contour lines for the given values on the grid"
   (format-wish "$~a contourlines ~a ~a ~a ~a"
-               (name chart) (item2string xcrds) (item2string ycrds) 
-               (item2string values) (item2string classes)))
+               (name chart) (tcl-it xcrds) (tcl-it ycrds) 
+               (tcl-it values) (tcl-it classes)))
 
 (defgeneric draw-contour-lines-function-values (chart xvec yvec valuesmat &optional classes))
 (defmethod draw-contour-lines-function-values ((chart xy-plot) xvec yvec valuesmat &optional classes)
   "Draws contour lines for the given values on the grid"
   (format-wish "$~a contourlinesfunctionvalues ~a ~a ~a ~a"
-               (name chart) (item2string xvec) (item2string yvec) 
-               (item2string valuesmat) (item2string classes)))
+               (name chart) (tcl-it xvec) (tcl-it yvec) 
+               (tcl-it valuesmat) (tcl-it classes)))
 
 (defgeneric draw-dot (chart series xcrd ycrd value))
 (defmethod draw-dot ((chart xy-plot) series xcrd ycrd value)
@@ -968,19 +1000,33 @@
 (defmethod draw-filled-rectangle ((chart isometric-plot) x1 y1 x2 y2 &optional colour)
   "Draw and fill specified rectangle on an isometric-plot"
   (format-wish "$~a plot filled-rectangle ~f ~f ~f ~f ~a" (name chart) x1 y1 x2 y2 
-               (if colour (string-downcase (string colour)) "")))
+               (tcl-it colour)))
 
 (defgeneric draw-grid (chart xcrds ycrds))
 (defmethod draw-grid ((chart xy-plot) xcrds ycrds)
   "Draws the grid cells as lines connecting the given coordinates"
-  (format-wish "$~a grid ~a ~a" (name chart) (item2string xcrds) (item2string ycrds)))
+  (format-wish "$~a grid ~a ~a" (name chart) (tcl-it xcrds) (tcl-it ycrds)))
+
+
+(defgeneric draw-interval (chart series xcoord ymin ymax &optional ycenter))
+(defmethod draw-interval ((chart xy-plot) series xcoord ymin ymax &optional ycenter)
+  "Adds a vertical error interval to xy-plot"
+  (format-wish "$~a interval ~a ~f ~f ~f ~a"
+               (name chart) series xcoord ymin ymax
+               (if ycenter ycenter "")))
+
+(defmethod draw-interval ((chart tx-plot) series xcoord ymin ymax &optional ycenter)
+  "Adds a vertical error interval to xy-plot"
+  (format-wish "$~a interval ~a ~f ~f ~f ~a"
+               (name chart) series xcoord ymin ymax
+               (if ycenter ycenter "")))
 
 (defgeneric draw-label-dot (chart x y text &optional orientation))
 (defmethod draw-label-dot ((chart xy-plot) x y text &optional orientation)
   "Draws a label and dot in the given plot: configure using data-config using 'labeldot' as series name"
   (format-wish "$~a labeldot ~f ~f \"~a\" ~a"
                (name chart) x y text
-               (get-param orientation "orientation" '("n" "s" "e" "w"))))
+               (tcl-it-checked orientation '("n" "s" "e" "w") "orientation")))
 
 (defgeneric draw-line (chart series coords))
 (defmethod draw-line ((chart ternary-diagram) series coords)
@@ -988,24 +1034,41 @@
   (format-wish "$~a line ~a {~a}"
                (name chart) 
                series 
-               (let ((result ""))
-                 (dolist (coord coords)
-                   (setf result (format nil "~a {~{ ~a~} }" result coord)))
-                 result)))
+               (tcl-it coords)))
 
 (defmethod draw-line ((chart threed-ribbon-chart) xypairs colour)
   "Plots a 3D ribbon based on given xy-pairs"
   (format-wish "$~a line {~&~a~&} ~a"
                (name chart)
-               (apply #'uiop:strcat 
-                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&" row)) xypairs))
-               (string-downcase (string colour))))
+               (tcl-it xypairs)
+               (tcl-it colour)))
+
+(defgeneric draw-minmax (chart series xcoord ymin ymax))
+(defmethod draw-minmax ((chart xy-plot) series xcoord ymin ymax)
+  "Draws a filled strip representing a minimum and maximum"
+  (format-wish "$~a minmax ~a ~f ~f ~f"
+               (name chart) series xcoord ymin ymax))
 
 (defgeneric draw-rectangle (chart x1 y1 x2 y2 &optional colour))
 (defmethod draw-rectangle ((chart isometric-plot) x1 y1 x2 y2 &optional colour)
   "Draw the outlines of specified rectangle on an isometric-plot"
   (format-wish "$~a plot rectangle ~f ~f ~f ~f ~a" (name chart) x1 y1 x2 y2 
-               (get-param colour)))
+               (tcl-it colour)))
+
+(defgeneric draw-region (chart series xlist ylist))
+(defmethod draw-region ((chart xy-plot) series xlist ylist)
+  "Draws a filled polygon"
+  (format-wish "$~a region ~a {~{ ~$~} } {~{ ~$~} }"
+               (name chart)
+               series
+               xlist
+               ylist))
+
+(defgeneric draw-trendline (chart series xcoord ycoord))
+(defmethod draw-trendline ((chart xy-plot) series xcoord ycoord)
+  "Trend line for xy-style plots"
+  (format-wish "$~a trend ~a ~f ~f"
+               (name chart) series xcoord ycoord))
 
 (defgeneric draw-vector (chart series xcrd ycrd ucmp vcmp))
 (defmethod draw-vector ((chart xy-plot) series xcrd ycrd ucmp vcmp)
@@ -1032,7 +1095,7 @@
 (defmethod font ((chart gantt-chart) keyword newfont)
   (format-wish "$~a font ~a \"~a\"" 
                (name chart) 
-               (get-param keyword)
+               (tcl-it keyword)
                newfont))
 
 (defgeneric gridsize (chart nxcells nycells))
@@ -1057,16 +1120,6 @@
                       (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&" row)) data))
                contours))
 
-(defun interval (chart series xcoord ymin ymax &optional ycenter)
-  "Adds a vertical error interval to xy-plot"
-  (typecase chart
-    (xy-plot
-      (format-wish "$~a interval ~a ~f ~f ~f ~a"
-                   (name chart) series xcoord ymin ymax
-                   (if ycenter ycenter "")))
-    (otherwise
-      (error "Unknown chart type passed to interval"))))
-
 (defgeneric legend (chart series text &optional spacing))
 (defmethod legend ((chart plotchart) series text &optional spacing)
   "Adds an entry to the chart legend"
@@ -1075,79 +1128,65 @@
 
 (defgeneric legend-config (chart &key background border canvas font legend-type position spacing))
 (defmethod legend-config ((chart plotchart) &key background border canvas font legend-type position spacing)
-  (let ((option-string ""))
-    (when background
-      (setf option-string (format nil "~a -background ~a" option-string (get-param background))))
-    (when border
-      (setf option-string (format nil "~a -border ~a" option-string (get-param border))))
-    (when canvas
-      (setf option-string (format nil "~a -canvas ~a" option-string (widget-path canvas))))
-    (when font
-      (setf option-string (format nil "~a -font ~a" option-string (get-param font))))
-    (when legend-type
-      (setf option-string (format nil "~a -legend-type ~a" option-string (get-param legend-type))))
-    (when position
-      (setf option-string (format nil "~a -position ~a" option-string (get-param position))))
-    (when spacing
-      (setf option-string (format nil "~a -spacing ~a" option-string (get-param spacing))))
-    (format-wish "$~a legendconfig ~a" (name chart) option-string)))
+  (format-wish "$~a legendconfig ~a" 
+               (name chart) 
+               (make-args (list (list "-background" background)
+                                (list "-border" border)
+                                (list "-canvas" (widget-path canvas))
+                                (list "-font" font)
+                                (list "-legendtype" legend-type)
+                                (list "-position" position)
+                                (list "-spacing" spacing)))))
 
-(defgeneric legend-shades (chart values classes))
-(defmethod legend-shades ((chart xy-plot) values classes)
-  "Adds contour classes to the legend as coloured rectangles"
-  (format-wish "$~s legendshades ~a ~a" (name chart) (item2string values) (item2string classes)))
+(defgeneric legend-remove (chart series))
+(defmethod legend-remove ((chart plotchart) series)
+  "Removes series from legend and redraws it"
+  (format-wish "$~a removefromlegend \"~a\"" (name chart) series))
 
 (defgeneric legend-isometric-lines (chart values classes))
 (defmethod legend-isometric-lines ((chart xy-plot) values classes)
   "Adds contour classes to the legend as coloured lines"
-  (format-wish "$~s legendisolines ~a ~a" (name chart) (item2string values) (item2string classes)))
+  (format-wish "$~s legendisolines ~a ~a" (name chart) (tcl-it values) (tcl-it classes)))
+
+(defgeneric legend-shades (chart values classes))
+(defmethod legend-shades ((chart xy-plot) values classes)
+  "Adds contour classes to the legend as coloured rectangles"
+  (format-wish "$~s legendshades ~a ~a" (name chart) (tcl-it values) (tcl-it classes)))
 
 (defun milestone (chart text time &optional colour)
   "Adds a milestone to a chart"
   (typecase chart
     ((or gantt-chart time-chart)
      (format-wish "$~a milestone \"~a\" \"~a\" ~a" 
-                  (name chart) text time (get-param colour)))
+                  (name chart) text time (tcl-it colour)))
     (otherwise
       (error "Unknown chart type ~a passed to milestone" (type-of chart)))))
-
-(defgeneric minmax (chart series xcoord ymin ymax))
-(defmethod minmax ((chart xy-plot) series xcoord ymin ymax)
-  "Draws a filled strip representing a minimum and maximum"
-  (format-wish "$~a minmax ~a ~f ~f ~f"
-               (name chart) series xcoord ymin ymax))
 
 (defgeneric period (chart text time-begin time-end &optional colour))
 (defmethod period ((chart time-chart) text time-begin time-end &optional colour)
   "Adds a time period to a chart"
   (format-wish "$~a period \"~a\" \"~a\" \"~a\" ~a" 
                (name chart) text time-begin time-end
-               (get-param colour)))
+               (tcl-it colour)))
 
 (defgeneric plaintext (chart x y text &optional direction))
 (defmethod plaintext ((chart plotchart) x y text &optional (direction "north"))
   "Adds plaintext to the plot, at given coordinates"
   (format-wish "$~a plaintext ~f ~f \"~a\" \"~a\"" 
                (name chart) x y text 
-               (get-param direction "direction" 
-                          '("north" "north-east" "east" "south-east" "south"
-                            "south-west" "west" "north-west"))))
+               (tcl-it-checked direction  
+                               '("north" "north-east" "east" "south-east" "south"
+                                 "south-west" "west" "north-west")
+                               "direction")))
 
-(defgeneric plaintext-config (chart &key font justify textcolour textcolor)) 
-(defmethod plaintext-config ((chart plotchart) &key font justify textcolour textcolor)
+(defgeneric plaintext-config (chart &key font justify text-colour text-color)) 
+(defmethod plaintext-config ((chart plotchart) &key font justify text-colour text-color)
   "Configures plaintext for given plot - settings apply to next call to chart-balloon"
-  (let ((option-string ""))
-    (when font
-      (setf option-string (format nil "~a -font ~a" option-string (get-param font))))
-    (when justify
-      (setf option-string (format nil "~a -justify ~a" 
-                                  option-string 
-                                  (get-param justify "justify" '("left" "center" "right")))))
-    (when textcolour
-      (setf option-string (format nil "~a -textcolour ~a" option-string (get-param textcolour))))
-    (when textcolor
-      (setf option-string (format nil "~a -textcolour ~a" option-string (get-param textcolor))))
-    (format-wish "$~a balloonconfig ~a" (name chart) option-string)))
+  (format-wish "$~a plaintextconfig ~a" 
+               (name chart) 
+               (make-args (list (list "-font" font)
+                                (list "-justify" (tcl-it-checked justify '("left" "center" "right") "justify"))
+                                (list "-textcolour" (or text-colour text-color))))))
 
 (defun plot (chart &rest args)
   "Generic call"
@@ -1158,10 +1197,10 @@
                     (name chart)
                     (first args)
                     (second args)
-                    (get-param (third args))
-                    (if (>= (length args) 4) (get-param (fourth args)) "")
-                    (if (= (length args) 5) (get-param (fifth args)) ""))
-       (error "bar-chart:plot series ydata colour &optional direction brightness")))
+                    (tcl-it (third args))
+                    (if (>= (length args) 4) (tcl-it (fourth args)) "")
+                    (if (= (length args) 5) (tcl-it (fifth args)) ""))
+       (error "bar-chart:plot series xdata colour &optional direction brightness")))
 
     (box-plot
       (if (and (= 3 (length args))
@@ -1175,11 +1214,11 @@
         (format-wish "$~a plot ~a ~f ~f" (name chart) (first args) (second args) (third args))
         (error "histogram:plot series x-coord y-coord")))
 
-    (pie-chart
-      (if (and (= 1 (length args))
-               (listp (first args)))
-        (format-wish "$~a plot {~a}" (name chart) (dotted-list-to-pairlist (first args)))
-        (error "plot requires 1 list argument for pie-chart")))
+    ((or pie-chart spiral-pie)
+     (if (and (= 1 (length args))
+              (listp (first args)))
+       (format-wish "$~a plot ~a" (name chart) (tcl-it (reduce #'append (first args))))
+       (error "plot requires 1 list argument for pie-chart")))
 
     ((or polar-plot right-axis xy-plot)
      (if (= 3 (length args))
@@ -1188,8 +1227,9 @@
 
     (radial-chart
       (if (member (length args) '(2 3))
-        (format-wish "$~a plot {~{ ~a~} } ~a ~a" (name chart) (first args) 
-                     (get-param (second args))
+        (format-wish "$~a plot ~a ~a ~a" (name chart)
+                     (tcl-it (first args)) 
+                     (tcl-it (second args))
                      (if (= 3 (length args)) (third args) ""))
         (error "radial-chart:plot data colour &optional thickness")))
 
@@ -1197,14 +1237,14 @@
       (if (member (length args) '(4 5))
         (format-wish "$~a plot ~a \"~a\" ~f ~f ~a"
                      (name chart) (first args) (second args) (third args) (fourth args)
-                     (if (= 5 (length args)) (get-param (fifth args)) ""))
+                     (if (= 5 (length args)) (tcl-it (fifth args)) ""))
         (error "status-timeline:plot series item start stop &optional colour")))
 
     (ternary-diagram
       (if (member (length args) '(5 6))
         (format-wish "$~a plot ~a ~f ~f ~f \"~a\" ~a"
-               (name chart) (first args) (second args) (third args) (fourth args) (fifth args)
-               (if (= 6 (length args)) (sixth args) ""))
+                     (name chart) (first args) (second args) (third args) (fourth args) (fifth args)
+                     (if (= 6 (length args)) (sixth args) ""))
         (error "ternary-diagram:plot series xcrd ycrd zcrd text &optional direction")))
 
     (threed-bar-chart
@@ -1213,15 +1253,15 @@
                      (name chart) 
                      (first args)
                      (second args)
-                     (get-param (third args)))
+                     (tcl-it (third args)))
         (error "threed-bar-chart:plot label yvalue colour")))
 
     (threed-ribbon-plot
       (if (= 1 (length args))
         (format-wish "$~a plot {~&~a~&}"
-               (name chart)
-               (apply #'uiop:strcat 
-                      (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&" row)) (first args))))
+                     (name chart)
+                     (apply #'uiop:strcat 
+                            (mapcar #'(lambda (row) (format nil "{~{ ~f~} }~&" row)) (first args))))
         (error "threed-ribbon-plot:plot yzpairs")))
 
     (tx-plot
@@ -1231,7 +1271,7 @@
 
     (windrose
       (if (= 2 (length args))
-        (format-wish "$~a plot {~{ ~d~} } ~a" (name chart) (first args) (get-param (second args)))
+        (format-wish "$~a plot ~a ~a" (name chart) (tcl-it (first args)) (tcl-it (second args)))
         (error "windrose:plot data colour")))
 
     (otherwise
@@ -1265,7 +1305,7 @@
   "Copies contents of charts onto given canvas"
   (format-wish "::Plotchart::plotpack ~a ~a ~{ $~a~}"
                (widget-path canvas)
-               (get-param direction "direction" '("top" "left" "bottom" "right"))
+               (tcl-it-checked direction '("top" "left" "bottom" "right") "direction")
                (mapcar #'name charts)))
 
 (defgeneric rchart (chart series xcoord ycoord))
@@ -1273,20 +1313,6 @@
   "Like plot, but adds +/- s.d. line"
   (format-wish "$~a rchart ~a ~f ~f"
                (name chart) series xcoord ycoord))
-
-(defgeneric region (chart series xlist ylist))
-(defmethod region ((chart xy-plot) series xlist ylist)
-  "Draws a filled polygon"
-  (format-wish "$~a region ~a {~{ ~$~} } {~{ ~$~} }"
-               (name chart)
-               series
-               xlist
-               ylist))
-
-(defgeneric remove-from-legend (chart series))
-(defmethod remove-from-legend ((chart plotchart) series)
-  "Removes series from legend and redraws it"
-  (format-wish "$~a removefromlegend \"~a\"" (name chart) series))
 
 (defgeneric ribbon (chart yzpairs))
 (defmethod ribbon ((chart threed-plot) yzpairs)
@@ -1330,21 +1356,12 @@
 (defgeneric ticklines (chart &optional colour))
 (defmethod ticklines ((chart ternary-diagram) &optional colour)
   "Displays ticklines in optional colour"
-  (format-wish "$~a ticklines ~a" (name chart) (get-param colour)))
+  (format-wish "$~a ticklines ~a" (name chart) (tcl-it colour)))
 
-(defun trend (chart series xcoord ycoord)
-  "Trend line for xy-style plots"
-  (typecase chart
-    (xy-plot
-      (format-wish "$~a trend ~a ~f ~f"
-                   (name chart) series xcoord ycoord))
-    (otherwise
-      (error "Unknown chart type passed to trend"))))
-
-(defgeneric title-text (chart title &optional position))
-(defmethod title-text ((chart plotchart) title &optional placement)
+(defgeneric title-text (chart title &optional placement))
+(defmethod title-text ((chart plotchart) title &optional (placement "center"))
   "Sets the chart title: placement can be :center, :left or :right"
-  (let ((place (get-param placement "placement" '("center" "left" "right"))))
+  (let ((place (tcl-it-checked placement '("center" "left" "right") "title-text: placement")))
     (format-wish "$~a title \"~a\" ~a" (name chart) title place)))
 
 (defgeneric v-subtext (chart text))
@@ -1361,26 +1378,26 @@
 (defmethod vector-config ((chart xy-plot) series &key colour color scale centred centered type)
   "Configuration options for drawing vectors on xy-plots"
   (when colour
-    (format-wish "$~a vectorconfig ~a -colour ~a" (name chart) series (get-param colour)))
+    (format-wish "$~a vectorconfig ~a -colour ~a" (name chart) series (tcl-it colour)))
   (when color
-    (format-wish "$~a vectorconfig ~a -colour ~a" (name chart) series (get-param color)))
+    (format-wish "$~a vectorconfig ~a -colour ~a" (name chart) series (tcl-it color)))
   (when scale
-    (format-wish "$~a vectorconfig ~a -scale ~a" (name chart) series (get-param scale)))
+    (format-wish "$~a vectorconfig ~a -scale ~a" (name chart) series (tcl-it scale)))
   (when centred
-    (format-wish "$~a vectorconfig ~a -centred ~a" (name chart) series (get-param centred)))
+    (format-wish "$~a vectorconfig ~a -centred ~a" (name chart) series (tcl-it centred)))
   (when centered
-    (format-wish "$~a vectorconfig ~a -centred ~a" (name chart) series (get-param centered)))
+    (format-wish "$~a vectorconfig ~a -centred ~a" (name chart) series (tcl-it centered)))
   (when type
     (format-wish "$~a vectorconfig ~a -type ~a" 
                  (name chart) series 
-                 (get-param type "type" '("cartesian" "polar" "nautical")))))
+                 (tcl-it-checked type '("cartesian" "polar" "nautical") "type"))))
 
 (defun vertical-line (chart text time-point &optional colour)
   "Adds a vertical line to a chart"
   (typecase chart
     ((or gantt-chart time-chart)
      (format-wish "$~a vertline \"~a\" \"~a\" ~a" 
-                  (name chart) text time-point (get-param colour)))
+                  (name chart) text time-point (tcl-it colour)))
     (status-timeline
       (format-wish "$~a vertline \"~a\" ~f"
                    (name chart) text time-point))
@@ -1396,7 +1413,7 @@
       (error "Unknown chart type ~a passed to vertical-scrollbar" (type-of chart)))))
 
 (defgeneric x-config (chart &key format))
-(defmethod x-config ((chart xy-plot) &key format)
+(defmethod x-config ((chart plotchart) &key format)
   (when format
     (format-wish "$~a xconfig -format \"~a\"" (name chart) format)))
 
@@ -1415,11 +1432,11 @@
   "Draw vertical ticklines at each tick location"
   (format-wish "$~a xticklines ~a ~a"
                (name chart)
-               (get-param colour)
-               (get-param dash "x-ticklines - dash" '("lines" "dots1" "dots2" "dots3" "dots4" "dots5"))))
+               (tcl-it colour)
+               (tcl-it-checked dash '("lines" "dots1" "dots2" "dots3" "dots4" "dots5") "x-ticklines - dash")))
 
 (defgeneric y-config (chart &key format))
-(defmethod y-config ((chart xy-plot) &key format)
+(defmethod y-config ((chart plotchart) &key format)
   (when format
     (format-wish "$~a yconfig -format \"~a\"" (name chart) format)))
 
@@ -1438,104 +1455,84 @@
   "Draw horizontal ticklines at each tick location"
   (format-wish "$~a yticklines ~a ~a"
                (name chart)
-               (get-param colour)
-               (get-param dash "y-ticklines - dash" '("lines" "dots1" "dots2" "dots3" "dots4" "dots5"))))
-
+               (tcl-it colour)
+               (tcl-it-checked dash '("lines" "dots1" "dots2" "dots3" "dots4" "dots5") "y-ticklines - dash")))
 
 ;; ---------------------------------------------------------------------------
 ;; Utility functions - internal use only
 
-(defun get-param (value &optional name valid-values)
-  "Converts keyword/string/symbol to lowercase string, and optionally checks validity"
-  (if value
-    (let ((param (string-downcase (string value))))
-      (if (or (null valid-values) (member param valid-values :test #'string=))
-        param
-        (error "Parameter ~a is not a valid ~a" value name)))
-    ""))
+(defun tcl-it (value)
+  "Returns a string representation of given value, in TCL form"
+  (cond 
+    ((null value)
+     "")
+    (t 
+      (typecase value
+        (string ; multi-word strings should be in quotes, but otherwise leave as is
+          (if (position #\space value)
+            (uiop:strcat "\"" value "\"")
+            value))
+        ((or keyword symbol) ; keywords/symbols should be lower-case strings
+         (string-downcase (string value)))
+        (float
+          (format nil "~f" value))
+        (integer 
+          (format nil "~d" value))
+        (list
+          (format nil "{~{ ~a~} }" (mapcar #'tcl-it value)))
+        (otherwise
+          (error "Unknown value type for tcl-it"))
+        ))))
 
-(defun dotted-list-to-pairlist (data)
-  "convert dotted list to {\"item\" n \"item\" n} format"
-  (let ((result ""))
-    (dolist (pair data)
-      (setf result (uiop:strcat result
-                                " " 
-                                (item2string (car pair)) 
-                                " "
-                                (item2string (cdr pair)))))
-    result))
+(defun tcl-it-boolean (value)
+  "Returns a string representation of value, treated as boolean"
+  (if value "1" "0"))
 
-(defun item2string (item)
-  "Converts an item, list, string, number, to a tcl string"
-  (if (null item)
-    ""
-    (typecase item
-      (list
-        (format nil "{~{ ~a~} }" (mapcar #'item2string item)))
-      (string
-        (format nil "\"~a\"" item))
-      (float
-        (format nil "~f" item))
-      (number
-        (format nil "~d" item))
-      (otherwise
-        (error "item2string does not recognise type of item ~a" item)))))
+(defun tcl-it-checked (value valid-values name)
+  "Converts value and then checks it is a valid value before returning it - errors if not"
+  (let ((result (tcl-it value)))
+    (if (member result valid-values :test #'string=)
+      result
+      (error "Value ~a is not a valid ~a" result name))))
+
+(defun make-args (pairs)
+  "Returns a tcl option string for given pairs of config option-value pairs"
+  (reduce #'uiop:strcat
+          (mapcar #'(lambda (pair)
+                      (if (second pair)
+                        (format nil "~a ~a " (first pair) (tcl-it (second pair)))
+                        ""))
+                  pairs)))
 
 (defun make-config-args (colour color type symbol radius width filled
                                 fillcolour style &optional smooth
                                 boxwidth whiskers whiskerwidth mediancolour medianwidth)
   "Returns a tcl option string for given config arguments"
-  (let ((result ""))
-    (when color
-      (setf result (format nil "~a -colour ~a" result (string-downcase (string color)))))
-    (when colour
-      (setf result (format nil "~a -colour ~a" result (string-downcase (string colour)))))
-    (when type
-      (setf result (format nil "~a -type ~a" result (string-downcase (string type)))))
-    (when symbol
-      (setf result (format nil "~a -symbol ~a" result (string-downcase (string symbol)))))
-    (when width
-      (setf result (format nil "~a -width ~d" result width)))
-    (when filled
-      (setf result (format nil "~a -filled ~a" result (string-downcase (string filled)))))
-    (when fillcolour
-      (setf result (format nil "~a -fillcolour ~a" result fillcolour)))
-    (when style
-      (setf result (format nil "~a -style ~a" result (string-downcase (string style)))))
-    (when smooth
-      (setf result (format nil "~a -smooth ~a" result smooth)))
-    (when boxwidth
-      (setf result (format nil "~a -boxwidth ~a" result boxwidth)))
-    (when whiskers
-      (setf result (format nil "~a -whiskers ~a" result whiskers)))
-    (when whiskerwidth
-      (setf result (format nil "~a -whiskerwidth ~a" result whiskerwidth)))
-    (when mediancolour
-      (setf result (format nil "~a -mediancolour ~a" result mediancolour)))
-    (when medianwidth
-      (setf result (format nil "~a -medianwidth ~a" result medianwidth)))
-    result))
+  (make-args (list (list "-colour" (or colour color))
+                   (list "-type" type)
+                   (list "-symbol" symbol)
+                   (list "-radius" radius)
+                   (list "-width" width)
+                   (list "-filled" filled)
+                   (list "-fillcolour" fillcolour)
+                   (list "-style" style)
+                   (list "-smooth" smooth)
+                   (list "-boxwidth" boxwidth)
+                   (list "-whiskers" whiskers)
+                   (list "-whiskerwidth" whiskerwidth)
+                   (list "-mediancolour" mediancolour)
+                   (list "-medianwidth" medianwidth))))
 
 (defun make-xy-args (xlabels ylabels box axesbox timeformat gmt &optional axestozero isometric)
   "Returns a tcl option string for given xy arguments"
-  (let ((result ""))
-    (when xlabels
-      (setf result (format nil "~a -xlabels ~a" result (item2string xlabels))))
-    (when ylabels
-      (setf result (format nil "~a -ylabels ~a" result (item2string ylabels))))
-    (when box
-      (setf result (format nil "~a -box ~a" result (item2string box))))
-    (when axesbox
-      (setf result (format nil "~a -axesbox ~a" result (item2string axesbox))))
-    (when timeformat
-      (setf result (format nil "~a -timeformat \"~a\"" result timeformat)))
-    (when gmt
-      (setf result (format nil "~a -gmt ~d" result gmt)))
-    (when axestozero
-      (setf result (format nil "~a -axestozero ~d" result axestozero)))
-    (when isometric
-      (setf result (format nil "~a -isometric ~d" result isometric)))
-    result))
+  (make-args (list (list "-xlabels" xlabels)
+                   (list "-ylabels" ylabels)
+                   (list "-box" box)
+                   (list "-axesbox" axesbox)
+                   (list "-timeformat" timeformat)
+                   (list "-gmt" (and gmt (tcl-it-boolean gmt)))
+                   (list "-axestozero" (and axestozero (tcl-it-boolean axestozero)))
+                   (list "-isometric" (and isometric (tcl-it-boolean isometric))))))
 
 (defun valid-axis-p (axis name &optional (len 3))
   "Checks the given axis is a valid len-item list of numbers - throws error if invalid"
@@ -1546,10 +1543,7 @@
 
 (defun valid-radius-data-p (data name)
   "Checks the given is a valid 2-item list of numbers - throws error if invalid"
-  (or (and (listp data)
-           (= 2 (length data))
-           (every #'numberp data))
-      (error "Given data ~a is not a valid set of radius data for ~a" data name)))
+  (valid-axis-p data name 2))
 
 (defun valid-time-axis-p (axis name)
   "Checks the given axis is a valid 3-item list of two strings and a number - throws error if invalid"
