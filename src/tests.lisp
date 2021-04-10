@@ -52,6 +52,9 @@
   (check-no-error (string= "red" 
                            (tcl-it-checked :red '("red" "blue" "green") "colours"))
                   "tcl-it-checked: failed on valid :red")
+  (check-no-error (string= "red" 
+                           (tcl-it-checked "RED" '("red" "blue" "green") "colours"))
+                  "tcl-it-checked: failed on valid 'RED'")
   (check-error (string= "red" 
                         (tcl-it-checked :red '("blue" "green") "colours"))
                "tcl-it-checked: failed on missing :red")
@@ -69,9 +72,9 @@
   (check (string= "-xlabels { a b c } -ylabels { red blue green } "
                   (make-xy-args '("a" "b" :c) '(red blue green) nil nil nil nil nil nil))
          "make-xy-args: xlabels+ylabels")
-  (check (string= "-xlabels { red blue green } -axestozero 1 "
+  (check (string= "-xlabels { red blue green } -axesatzero 1 "
                   (make-xy-args '(red blue green) nil nil nil nil nil t nil))
-         "make-xy-args: xlabels + axestozero")
+         "make-xy-args: xlabels + axesatzero")
   (check (string= "-box { 0 0 100 50 } -axesbox { wc n 0 0 100 50 } "
                   (make-xy-args nil nil '(0 0 100 50) '("wc" :n 0 0 100 50) nil nil))
          "make-xy-args: box + axesbox")
@@ -89,14 +92,15 @@
          "validators: fail on '(a 10 2)")
   (check-error (valid-axis-p '(a 10 2) "a")
          "validators: fail on '(a 10 2)")
-  (check-error (valid-axis-p '(1 10 2) "a" 2)
+
+  (check-error (valid-number-pair-p '(1 10 2) "a")
          "validators: fail on '(1 10 2)")
-  (check-no-error (valid-axis-p '(10 2) "a" 2)
+  (check-no-error (valid-number-pair-p '(10 2) "a")
          "validators: fail on '(a 10 2)")
 
-  (check-error (valid-radius-data-p '(1 10 2) "a")
+  (check-error (valid-number-pair-p '(1 10 2) "a")
                "validators: fail on '(1 10 2) radius data")
-  (check-no-error (valid-radius-data-p '(1 10) "a")
+  (check-no-error (valid-number-pair-p '(1 10) "a")
                   "validators: fail on '(1 10) radius data")
 
   (check-no-error (valid-time-axis-p '("start" "end" 10) "a")

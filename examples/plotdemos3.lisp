@@ -1,5 +1,4 @@
 ;; Translation of plotdemos3.tcl
-;; -- TODO: chart:task for gantt must return descriptor for use in summary/connect
 
 (require 'asdf)
 (require 'ltk-plotchart)
@@ -12,12 +11,12 @@
             (let* ((gantt (chart:create-gantt-chart c "1 january 2004" "31 december 2004" :num-items 4))
                    (from (chart:task gantt "Spring" "1 march 2004" "1 june 2004" 30))
                    (to (chart:task gantt "Summer" "1 june 2004" "1 september 2004" 10)))
-;              (chart:summary gantt "First half" from to)
-;              (chart:connect gantt from to)
-              (chart:vertical-line gantt "1 jan" "1 january 2004")
-              (chart:vertical-line gantt "1 apr" "1 april 2004")
-              (chart:vertical-line gantt "1 jul" "1 july 2004")
-              (chart:vertical-line gantt "1 oct" "1 october 2004")
+              (chart:summary gantt "First half" from to)
+              (chart:connect gantt from to)
+              (chart:draw-vertical-line gantt "1 jan" "1 january 2004")
+              (chart:draw-vertical-line gantt "1 apr" "1 april 2004")
+              (chart:draw-vertical-line gantt "1 jul" "1 july 2004")
+              (chart:draw-vertical-line gantt "1 oct" "1 october 2004")
               (chart:milestone gantt "Longest day" "21 july 2004")
               (chart:title-text gantt "Seasons (northern hemisphere)")
 

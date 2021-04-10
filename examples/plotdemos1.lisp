@@ -51,8 +51,8 @@
 
             ;; -- set up part 2
             (let ((s (chart:create-pie-chart c2)))
-              (chart:plot s '(("Long names" . 10) ("Short names" . 30) ("Average" . 40)
-                                                  ("Ultra-short names" . 5)))
+              (chart:plot s '(("Long names" 10) ("Short names" 30) ("Average" 40)
+                                                  ("Ultra-short names" 5)))
               (chart:title-text s "Okay - this works"))
 
             ;; -- set up part 3
@@ -146,10 +146,10 @@
                                     :num-items 4)))
               (chart:period s "Spring" "1 march 2004" "1 june 2004" :green)
               (chart:period s "Summer" "1 june 2004" "1 september 2004" :yellow)
-              (chart:vertical-line s "1 jan" "1 january 2004")
-              (chart:vertical-line s "1 apr" "1 april 2004")
-              (chart:vertical-line s "1 jul" "1 july 2004")
-              (chart:vertical-line s "1 oct" "1 october 2004")
+              (chart:draw-vertical-line s "1 jan" "1 january 2004")
+              (chart:draw-vertical-line s "1 apr" "1 april 2004")
+              (chart:draw-vertical-line s "1 jul" "1 july 2004")
+              (chart:draw-vertical-line s "1 oct" "1 october 2004")
               (chart:milestone s "Longest day" "21 july 2004")
               (chart:title-text s "Seasons (northern hemisphere)")))
 

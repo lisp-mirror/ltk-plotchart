@@ -59,7 +59,6 @@
     ; remaining functions
     :add-milestone
     :add-period
-    :area
     :background
     :balloon
     :balloon-config
@@ -75,6 +74,7 @@
     :corner-text
     :data-config
     :dot-config
+    :draw-area
     :draw-box-and-whiskers
     :draw-circle
     :draw-contour-lines
@@ -90,8 +90,10 @@
     :draw-minmax
     :draw-rectangle
     :draw-region
+    :draw-ticklines
     :draw-trendline
     :draw-vector
+    :draw-vertical-line
     :draw-x-band
     :draw-y-band
     :explode
@@ -121,13 +123,11 @@
     :subtitle
     :summary
     :task
-    :ticklines
     :title-text
     :v-subtext
     :v-text
     :vector-config
     :vertical-scrollbar
-    :vertical-line
     :x-config
     :x-subtext
     :x-text
