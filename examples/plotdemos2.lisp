@@ -1,4 +1,6 @@
 ;; Translation of plotdemos2.tcl
+;; - TODO: 'after' is not working with the stripchart variable
+;;   so gendata is not visibly incremental
 
 (require 'asdf)
 (require 'ltk-plotchart)
@@ -12,10 +14,7 @@
     (chart:plot stripchart "series2" xnew ynew2)
 
     (when (< xnew 200)
-;      (after 500 (lambda ()  ; TODO - 'after' not working
-                   (gendata stripchart xnew xd ynew yd)
-;                   ))
-      )))
+      (gendata stripchart xnew xd ynew yd))))
 
 (with-ltk ()
           ;; frame 1 - has two parts
@@ -29,10 +28,7 @@
             (let ((s (chart:create-strip-chart c '(0.0 100.0 10.0) '(0.0 100.0 20.0))))
 
               (chart:title-text s "Aha!")
-              ;              (after 100 (lambda () ; TODO - 'after' not working
-              (gendata s 0.0 15.0 50.0 30.0)
-              ;                     ))
-              )
+              (gendata s 0.0 15.0 50.0 30.0))
 
             ;; -- set up an isometric plot
             (let ((s (chart:create-isometric-plot c2 '(0.0 100.0) '(0.0 200.0) :noaxes)))

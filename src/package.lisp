@@ -59,6 +59,7 @@
     ; remaining functions
     :add-milestone
     :add-period
+    :add-row
     :background
     :balloon
     :balloon-config
@@ -74,9 +75,10 @@
     :corner-text
     :data-config
     :dot-config
-    :draw-area
     :draw-box-and-whiskers
     :draw-circle
+    :draw-contour-box
+    :draw-contour-fill
     :draw-contour-lines
     :draw-contour-lines-function-values
     :draw-dot
@@ -111,13 +113,14 @@
     :plaintext
     :plaintext-config
     :plot
+    :plot-config
     :plot-cumulative
     :plot-data
+    :plot-erase
     :plot-list
     :plot-pack
     :rchart
     :ribbon
-    :row
     :save-plot
     :separator
     :subtitle
